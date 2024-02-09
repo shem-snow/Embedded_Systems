@@ -1,4 +1,3 @@
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.c
@@ -15,46 +14,13 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
 
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
@@ -62,40 +28,71 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
   /* Configure the system clock */
   SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
+	
+	// Enable the peripheral clocks
+	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+	
+  /* Initialize all configured peripherals _______________________________________*/
+	
+	// Set the MODER pins to general purpose output mode (01) 
+	
+	// The green LED (PC9)
+	GPIOC->MODER &= ~(1 << 19); // 0
+	GPIOC->MODER |= 1 << 18; // 1
+	
+	// The red LED (PC6)
+	GPIOC->MODER &= ~(1 << 13); // 0
+	GPIOC->MODER |= 1 << 12; // 1
+	
+	// The blue LED (PC7)
+	GPIOC->MODER &= ~(1<<14); // 0
+	GPIOC->MODER |= 1 << 14; // 1
+	
+	// Set the MODER pins to input mode (00) for the push button 
+	GPIOA->MODER &= ~(3); // 00
+	
+	
+	// Set the OTYPER register pins to push-pull (0)
+	GPIOC->OTYPER &= ~(1 << 9); // Green
+	GPIOC->OTYPER &= ~(1 << 6); // Red
+	GPIOC->OTYPER &= ~(1 << 7); // Blue
+	
+	// Set the OSPEEDR register to 'low speed' (x0).
+	GPIOC->OSPEEDR &= ~(1 << 18); // Green
+	GPIOC->OSPEEDR &= ~(1 << 12); // Red
+	GPIOC->OSPEEDR &= ~(1 << 14); // Blue
+	GPIOA->OSPEEDR &= ~(1); // Push-button
+	
+	// Set the PUPDR register to 'No pull-up, pull-down' (00).
+	GPIOC->PUPDR &= ~(3 << 18); // Green
+	GPIOC->PUPDR &= ~(3 << 12); // Red
+	GPIOC->PUPDR &= ~(3 << 14); // Blue
+	
+	// Set the PUPDR register to 'pull-down' (10) for the push-button.
+	GPIOA->PUPDR |= 2; // 1
+	GPIOA->PUPDR &= ~(1); // 0
+	
+	// Initialize the LEDs to high or low.
+	GPIOC->ODR |= (1 << 9); // Green
+	GPIOC->ODR |= (1 << 6); // Red
+	GPIOC->ODR |= (1 << 7); // Blue
+	
 
   /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
+  while (1) {
+		HAL_Delay(500);
+		
+		GPIOC->ODR ^= (1 << 6); // red
   }
-  /* USER CODE END 3 */
 }
 
 /**
@@ -121,8 +118,7 @@ void SystemClock_Config(void)
 
   /** Initializes the CPU, AHB and APB buses clocks
   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK |RCC_CLOCKTYPE_PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -133,9 +129,6 @@ void SystemClock_Config(void)
   }
 }
 
-/* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -149,7 +142,6 @@ void Error_Handler(void)
   while (1)
   {
   }
-  /* USER CODE END Error_Handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT

@@ -54,8 +54,12 @@ int main(void)
 	GPIOC->MODER |= 1 << 12; // 1
 	
 	// The blue LED (PC7)
-	GPIOC->MODER &= ~(1<<14); // 0
+	GPIOC->MODER &= ~(1 << 15); // 0
 	GPIOC->MODER |= 1 << 14; // 1
+	
+	// The oragne LED (PC8)
+	GPIOC->MODER &= ~(1 << 17); // 0
+	GPIOC->MODER |= 1 << 16; // 1
 	
 	// Set the MODER pins to input mode (00) for the push button 
 	GPIOA->MODER &= ~(3); // 00
@@ -65,17 +69,20 @@ int main(void)
 	GPIOC->OTYPER &= ~(1 << 9); // Green
 	GPIOC->OTYPER &= ~(1 << 6); // Red
 	GPIOC->OTYPER &= ~(1 << 7); // Blue
+	GPIOC->OTYPER &= ~(1 << 8); // Orange
 	
 	// Set the OSPEEDR register to 'low speed' (x0).
 	GPIOC->OSPEEDR &= ~(1 << 18); // Green
 	GPIOC->OSPEEDR &= ~(1 << 12); // Red
 	GPIOC->OSPEEDR &= ~(1 << 14); // Blue
+	GPIOC->OSPEEDR &= ~(1 << 16); // Orange
 	GPIOA->OSPEEDR &= ~(1); // Push-button
 	
 	// Set the PUPDR register to 'No pull-up, pull-down' (00).
 	GPIOC->PUPDR &= ~(3 << 18); // Green
 	GPIOC->PUPDR &= ~(3 << 12); // Red
 	GPIOC->PUPDR &= ~(3 << 14); // Blue
+	GPIOC->PUPDR &= ~(3 << 16); // Orange
 	
 	// Set the PUPDR register to 'pull-down' (10) for the push-button.
 	GPIOA->PUPDR |= 2; // 1
@@ -85,13 +92,25 @@ int main(void)
 	GPIOC->ODR |= (1 << 9); // Green
 	GPIOC->ODR |= (1 << 6); // Red
 	GPIOC->ODR |= (1 << 7); // Blue
+	GPIOC->ODR |= (1 << 8); // Orange
 	
-
+	// Configure the EXTI peripheral to generate interrupts on the rising edge of the push-button.
+	EXTI->IMR |= 1; // Unmask the associated bit (page 219 and example code on page 947)
+	EXTI->RTSR |= 1; // Configure the trigger selection bit of the interrupt line on the rising edge
+	// EXTI->FTSR |= 1; // Configure the trigger selection bits of the interrupt line on the falling edge
+	
+	RCC->APB2RSTR |= 1; // Enable the SYSCFGRST clock (peripheral manual page 117).
+	SYSCFG->EXTICR[0] &= ~(7); // (pages 169 and 170) clear the bottom three bits of PA to multiplex the push-button into EXTI0
+	
+	NVIC_EnableIRQ(EXTI0_1_IRQn); // Enable Interrupt on EXTIO_1
+	NVIC_SetPriority(EXTI0_1_IRQn, 0); // Make it more important than the other interrupts.
+	
+	
   /* Infinite loop */
   while (1) {
 		HAL_Delay(500);
 		
-		GPIOC->ODR ^= (1 << 6); // red
+		GPIOC->ODR ^= (1 << 6); // toggle red
   }
 }
 

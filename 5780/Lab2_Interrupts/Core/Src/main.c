@@ -102,16 +102,35 @@ int main(void)
 	RCC->APB2RSTR |= 1; // Enable the SYSCFGRST clock (peripheral manual page 117).
 	SYSCFG->EXTICR[0] &= ~(7); // (pages 169 and 170) clear the bottom three bits of PA to multiplex the push-button into EXTI0
 	
-	NVIC_EnableIRQ(EXTI0_1_IRQn); // Enable Interrupt on EXTIO_1
-	NVIC_SetPriority(EXTI0_1_IRQn, 0); // Make it more important than the other interrupts.
+	NVIC_EnableIRQ(EXTI0_1_IRQn); // Enable Interrupt on EXTIO_1 (line 81 in the stm32...xb.h file)
+	NVIC_SetPriority(EXTI0_1_IRQn, 1); // Make it more important than the other interrupts.
 	
-	
+
   /* Infinite loop */
   while (1) {
 		HAL_Delay(500);
 		
 		GPIOC->ODR ^= (1 << 6); // toggle red
   }
+}
+
+/*
+* Handler for the push-button interrupt.
+* It will toggle the green (PC8) and orange (PC9) LEDs.
+*/
+void EXTI0_1_IRQHandler(void) {
+	
+	GPIOC->ODR ^= (1 << 8); // green
+	GPIOC->ODR ^= (1 << 9); // orange
+	
+	volatile uint16_t accumulator = 0;
+	
+	while(accumulator < 50000)
+		accumulator++;
+	
+	// Clear the pending bit to prevent the same interrupt from being re-triggered.
+	EXTI->PR |= 1; // Clears the pending bit so execution can leave the interrupt.
+	//EXTI->PR &= ~1; // gets execution stuck in the interrupt.
 }
 
 /**

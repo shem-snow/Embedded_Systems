@@ -44,8 +44,10 @@ int main(void)
 	RCC->AHBENR |= RCC_AHBENR_GPIOCEN; // LEDs
 	
 	// Configure and initialize the green (PC8) and orange (PC9) LEDs
-	GPIOC->MODER &= ~(3<<16); // input mode 00
-	GPIOC->MODER &= ~(3<<18);
+	GPIOC->MODER &= ~(1<<17); // input mode 01
+	GPIOC->MODER &= ~(1<<19);
+	GPIOC->MODER |= (1<<16);
+	GPIOC->MODER |= (1<<18);
 	GPIOC->OTYPER &= ~(3<<8); // push-pull 0
 	GPIOC->OSPEEDR &= ~(1<<16); // low speed x0
 	GPIOC->OSPEEDR &= ~(1<<18);
@@ -58,17 +60,28 @@ int main(void)
 	TIM2->PSC = 7999;
 	TIM2->ARR = 250;
 	
+	TIM3->PSC = 1999;
+	TIM3->ARR = 5;
+	
 	// Configure the timer to generate an interrrupt on the UEV event.ADC
 	TIM2->DIER |= 1;
 	
+	TIM3->DIER |= 1;
+	
 	// Configure the timer and start it.
-	TIM2->CR1 |=1;
+	TIM2->CR1 |= 1;
+	
+	TIM3->CR1 |= 1;
 	
 	
   /* Configure the system clock */
   SystemClock_Config();
 
-  /* Initialize all configured peripherals */
+  // Enable the interrupt in the NVIC
+	NVIC_EnableIRQ(TIM2_IRQn);
+	NVIC_SetPriority(TIM2_IRQn, 1); // A priority is set by default if you don't set one
+	
+	
   
 
   /* Infinite loop */
@@ -82,8 +95,13 @@ int main(void)
 * Interrupt handler for timer 2
 */
 void TIM2_IRQHandler(void) {
-	// Toggle between the green (PC8) and orange (PC9) LEDs
 	
+	// Toggle between the green (PC8) and orange (PC9) LEDs
+	GPIOC->ODR ^= (1<<8);
+	GPIOC->ODR ^= (1<<9);
+	
+	// Clear the pending flag for the interrrup status register
+	TIM2->SR ^= 1;
 }
 
 /**

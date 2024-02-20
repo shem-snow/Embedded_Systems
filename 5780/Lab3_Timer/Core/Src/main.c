@@ -38,7 +38,7 @@ int main(void)
   /* Reset and initializes. */
   HAL_Init();
 	
-	// Enable the peripherals we will use (reference the "reset and clock control" section of the peripheral datasheet).
+	// Enable the peripherals we will use (reference the "reset and clock control" section of the peripheral manual).
 	RCC->APB1ENR |=  RCC_APB1ENR_TIM2EN;// Timer 2
 	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; // Timer 3
 	RCC->AHBENR |= RCC_AHBENR_GPIOCEN; // LEDs
@@ -49,6 +49,7 @@ int main(void)
 	GPIOC->MODER |= (1<<16);
 	GPIOC->MODER |= (1<<18);
 	GPIOC->OTYPER &= ~(3<<8); // push-pull 0
+	GPIOC->OTYPER &= ~(3<<9);
 	GPIOC->OSPEEDR &= ~(1<<16); // low speed x0
 	GPIOC->OSPEEDR &= ~(1<<18);
 	GPIOC->PUPDR &= ~(3<<16); // no pull, pull-down 00
@@ -56,21 +57,75 @@ int main(void)
 	GPIOC->ODR |= (1<<8); // Green high
 	GPIOC->ODR &= ~(1<<9); // orange low
 	
-	// Set the PSC and ARR to obtain a target clock frequency of 4 Hz (timer 2 is 32-bit and timer 3  is 16-bit)
+	// Configure and initialize the red (PC6) and blue (PC7) LEDs.
+	GPIOC->MODER |= (2<<2*6); // red Alternate function mode: 10
+	GPIOC->MODER &= ~(1<<2*6);
+	GPIOC->MODER |= (2<<2*7); // blue Alternate function mode: 10
+	GPIOC->MODER &= ~(1<<2*7);
+	GPIOC->OTYPER &= ~(3<<6); // red push-pull: 0
+	GPIOC->OTYPER &= ~(3<<7); // blue push-pull: 0
+	GPIOC->OSPEEDR &= ~(1<<2*6); // red low speed: x0
+	GPIOC->OSPEEDR &= ~(1<<2*7); // blue low speed: x0
+	GPIOC->PUPDR &= ~(3<<2*6); // red no pull, pull-down: 00
+	GPIOC->PUPDR &= ~(3<<2*7); // blue no pull, pull-down: 00
+	
+	// Set the PSC and ARR to obtain target clock frequencies of 4 Hz in timer 2 and 800 Hz in timer 3.
 	TIM2->PSC = 7999;
 	TIM2->ARR = 250;
 	
+	// For the lab check-off. Show that as the ratio changes, the duty cycle changes => the blue LED's brightness changes
+	
+	// blue is bright like red
+	TIM3->PSC = 1249;
+	TIM3->ARR = 8;
+	
+	// blue is visible but not as bright as red.
 	TIM3->PSC = 1999;
 	TIM3->ARR = 5;
 	
-	// Configure the timer to generate an interrrupt on the UEV event.ADC
+	// blue is less visible and obviously blinks
+	//TIM3->PSC = 7999;
+	//TIM3->ARR = 1250;
+	
+	// blue is almost non-visible
+	//TIM3->PSC = 7;
+	//TIM3->ARR = 1250;
+	
+	// Configure the timer to generate an interrrupt on the UEV event. DIER enables direct memory access for a given timer.
 	TIM2->DIER |= 1;
+	// TIM3->DIER |= 1;
 	
-	TIM3->DIER |= 1;
-	
-	// Configure the timer and start it.
+	// Configure timer 2 to start.
 	TIM2->CR1 |= 1;
 	
+	// Set the Capture/Compare Mode Registers to put the output channels in PWM mode.
+	TIM3->CCMR1 &= ~(3); // 00 indicates that the channel is configured as an output.
+	TIM3->CCMR1 |= (7<<4); // bits 4, 5, and 6 set the mode (we want PWM mode 2: 111).
+	
+	TIM3->CCMR2 &= ~(3);
+	
+	// Set channel 2 to PWM Mode 1 (110). Bits [14:12] do the same thing as bits [6:4]
+	TIM3->CCMR1 |= (3<<13); // 11x
+	TIM3->CCMR1 &= ~(1<<12); // xx0
+	
+	// Enable the output compare preload for both channels (bits 11 and 3).
+	TIM3->CCMR1 |= (1<<11);
+	TIM3->CCMR1 |= (1<<3);
+	
+	// Set the output enable bits for channels 1 (bit 0) and 2 (bit 4) in the Capture/Compare Enable Register.
+	TIM3->CCER |= 17; // 10001
+	
+	// Set the capture/compare registers for both channels to 20% of my ARR
+	TIM3->CCR1 = 1;
+	TIM3->CCR2 = 1;
+	
+	//TIM3->CCR1 = 20;
+	//TIM3->CCR2 = 20;
+	
+	// Configure the alternate function register for port C (LEDs) 
+	GPIOC->AFR[0] &= ~(15); // 1111
+	
+	// Configure timer 3 to start
 	TIM3->CR1 |= 1;
 	
 	
@@ -80,6 +135,7 @@ int main(void)
   // Enable the interrupt in the NVIC
 	NVIC_EnableIRQ(TIM2_IRQn);
 	NVIC_SetPriority(TIM2_IRQn, 1); // A priority is set by default if you don't set one
+	
 	
 	
   

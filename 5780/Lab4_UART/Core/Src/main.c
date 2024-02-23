@@ -19,11 +19,8 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-void USART_TransmitChar(char c);
-void USART_TransmitString(const char *str);
-char USART_ReceiveChar(void);
-void ProcessCommand(char color, char action);
-void USART3_4_IRQHandler(void);
+void Transmit_Char(char c);
+
 
 /**
   * @brief  The application entry point.
@@ -52,12 +49,30 @@ int main(void)
 	GPIOC->AFR[0] &= ~(14 << 4*5); // pin 5
 	GPIOC->AFR[0] |= (1 << 4*5);
 	
-  
+  // Set the Baud rate for communcation to be 115,200 bits/second. The system clock is 8 MHz.
+	USART3->BRR = HAL_RCC_GetHCLKFreq() / 69; // nice
+	
+	// Enable USART in the control register.
+	USART3->CR1 |= 6; // ..110, bit 2 enables the receiver and bit 3 enables the transmitter.
+	USART3->CR1 |= 1;
 
 
   while (1)
   {
   }
+}
+
+// __________________________________________________________________ Helper methods _______________________________________________
+
+/*
+* Does nothing while the transmit data register is empty.
+* When it's not empty, it transmits the character.
+*/
+void Transmit_Char(char c) {
+	
+	while( !(USART3->ISR & (1<<7) ) ) {
+	}
+	USART3->TDR = c;
 }
 
 /**

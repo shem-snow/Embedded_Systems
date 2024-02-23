@@ -73,14 +73,14 @@ int main(void)
 	// as the ratio changes, the duty cycle changes => the LED's brightness changes
 	// Set the PSC and ARR to obtain target clock frequencies of 4 Hz in timer 2 and 800 Hz in timer 3.
 	
-	// Keep this one here or it breaks.
+	// Keep this one here or it breaks. both bright.
 	TIM2->PSC = 7999;
 	TIM2->ARR = 250;
 	
 	// RED A LITTLE DIM, BLUE BRIGHT
-	TIM3->PSC = 499;
-	TIM3->ARR = 20;
-	TIM3->CCR1 = 19; 
+	//TIM3->PSC = 499;
+	//TIM3->ARR = 20;
+	//TIM3->CCR1 = 19; 
 	
 	// RED SUPER DIM, BLUE BRIGHT
 	
@@ -94,12 +94,12 @@ int main(void)
 	//TIM3->CCR2 = 1500; // blue won't toggle
 	
 	// BLUE A LITTLE DIM, RED BRIGHT
-	//TIM3->PSC = 8;
-	//TIM3->ARR = 1249;
+	TIM3->PSC = 8;
+	TIM3->ARR = 1249;
 	
 	// BLUE SUPER DIM, RED BRIGHT
-	//TIM3->PSC = 5;
-	//TIM3->ARR = 7999;
+	TIM3->PSC = 5;
+	TIM3->ARR = 7999;
 	
 	// BLUE SUPER DIM, RED BRIGHT
 	//TIM2->PSC = 7999;
@@ -107,7 +107,7 @@ int main(void)
 	
 	
 	// Set the capture/compare registers for both channels to 20% of my ARR
-	// TODO: TIM3->CCR1 = 1; // red will not toggle
+	TIM3->CCR1 = 1; // red will not toggle
 	//TIM3->CCR2 = 1; // blue will togle
 	
 	// TIM3->CCR1 = 40; // red will not toggle

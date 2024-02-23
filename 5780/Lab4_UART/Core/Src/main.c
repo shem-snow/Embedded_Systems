@@ -20,6 +20,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void Transmit_Char(char c);
+void Transmit_String(char str[]);
 
 
 /**
@@ -73,6 +74,14 @@ void Transmit_Char(char c) {
 	while( !(USART3->ISR & (1<<7) ) ) {
 	}
 	USART3->TDR = c;
+}
+
+/*
+* Loops over each character in the "str" array and transmits the character there. 
+*/
+void Transmit_String(char str[]) {
+	 for(int i = 0; str[i] != '\0'; i++)
+		 Transmit_Char(str[i]);
 }
 
 /**

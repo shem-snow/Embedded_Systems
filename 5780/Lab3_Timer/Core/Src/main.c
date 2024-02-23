@@ -70,26 +70,57 @@ int main(void)
 	GPIOC->PUPDR &= ~(3<<2*7); // blue no pull, pull-down: 00
 	
 	// Set the PSC and ARR to obtain target clock frequencies of 4 Hz in timer 2 and 800 Hz in timer 3.
+	// as the ratio changes, the duty cycle changes => the LED's brightness changes
+	// Set the PSC and ARR to obtain target clock frequencies of 4 Hz in timer 2 and 800 Hz in timer 3.
+	
+	// Keep this one here or it breaks.
 	TIM2->PSC = 7999;
 	TIM2->ARR = 250;
 	
-	// For the lab check-off. Show that as the ratio changes, the duty cycle changes => the blue LED's brightness changes
+	// RED A LITTLE DIM, BLUE BRIGHT
+	TIM3->PSC = 499;
+	TIM3->ARR = 20;
+	TIM3->CCR1 = 19; 
 	
-	// blue is bright like red
-	TIM3->PSC = 1249;
-	TIM3->ARR = 8;
+	// RED SUPER DIM, BLUE BRIGHT
 	
-	// blue is visible but not as bright as red.
-	TIM3->PSC = 1999;
-	TIM3->ARR = 5;
+	// BOTH DIM.
 	
-	// blue is less visible and obviously blinks
-	//TIM3->PSC = 7999;
+	
+	
+	// BOTH BRIGHT
+	//TIM3->PSC = 1250;
 	//TIM3->ARR = 1250;
+	//TIM3->CCR2 = 1500; // blue won't toggle
 	
-	// blue is almost non-visible
-	//TIM3->PSC = 7;
-	//TIM3->ARR = 1250;
+	// BLUE A LITTLE DIM, RED BRIGHT
+	//TIM3->PSC = 8;
+	//TIM3->ARR = 1249;
+	
+	// BLUE SUPER DIM, RED BRIGHT
+	//TIM3->PSC = 5;
+	//TIM3->ARR = 7999;
+	
+	// BLUE SUPER DIM, RED BRIGHT
+	//TIM2->PSC = 7999;
+	//TIM2->ARR = 250;
+	
+	
+	// Set the capture/compare registers for both channels to 20% of my ARR
+	// TODO: TIM3->CCR1 = 1; // red will not toggle
+	//TIM3->CCR2 = 1; // blue will togle
+	
+	// TIM3->CCR1 = 40; // red will not toggle
+	//TIM3->CCR2 = 40; // blue will togle
+	
+	
+	
+	
+	//TIM3->CCR1 = 40;
+	//TIM3->CCR2 = 40;
+	
+	//TIM3->CCR1 = 250; // red will toggle
+	TIM3->CCR2 = 250; // blue won't toggle
 	
 	// Configure the timer to generate an interrrupt on the UEV event. DIER enables direct memory access for a given timer.
 	TIM2->DIER |= 1;
@@ -104,7 +135,7 @@ int main(void)
 	
 	TIM3->CCMR2 &= ~(3);
 	
-	// Set channel 2 to PWM Mode 1 (110). Bits [14:12] do the same thing as bits [6:4]
+	// Set channel 2  its [6:4]
 	TIM3->CCMR1 |= (3<<13); // 11x
 	TIM3->CCMR1 &= ~(1<<12); // xx0
 	
@@ -114,13 +145,6 @@ int main(void)
 	
 	// Set the output enable bits for channels 1 (bit 0) and 2 (bit 4) in the Capture/Compare Enable Register.
 	TIM3->CCER |= 17; // 10001
-	
-	// Set the capture/compare registers for both channels to 20% of my ARR
-	TIM3->CCR1 = 1;
-	TIM3->CCR2 = 1;
-	
-	//TIM3->CCR1 = 20;
-	//TIM3->CCR2 = 20;
 	
 	// Configure the alternate function register for port C (LEDs) 
 	GPIOC->AFR[0] &= ~(15); // 1111

@@ -20,7 +20,11 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void Transmit_Char(char c);
-void Transmit_String(char str[]);
+void Transmit_String(char* str);
+
+// Separations of concern.
+void Init_USART3(void);
+void Init_LEDs(void);
 
 
 /**
@@ -33,15 +37,28 @@ int main(void)
   SystemClock_Config();
 	
 	// Enable all the peripherals we're using.
-	RCC->AHBENR |= RCC_AHBENR_CRCEN; // Port C: LEDs and the port C pins.
-	RCC->APB1ENR |= RCC_APB1ENR_USART3EN; // USART3
+	Init_LEDs();
+	Init_USART3();
+	
+
+  while (1) {
+		Transmit_String("Jeffery Epstein didn't kill himself.");
+  }
+}
+
+// __________________________________________________________________ Helper methods _______________________________________________
+
+void Init_USART3(void) {
+	
+	// Feed the clock into the USART3 peripheral
+	RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
 	
 	// Set the discovery board pins (connected to USART3) to alternate function mode (10)
 	GPIOC->MODER |= 2 << (2*4); // pin 4
-	GPIOC->MODER &= ~(1<<2*4);
+	GPIOC->MODER &= ~(1<< (2*4) );
 	
 	GPIOC->MODER |= 2 << (2*5); // pin 5
-	GPIOC->MODER &= ~(1<<2*5);
+	GPIOC->MODER &= ~(1<< (2*5) );
 	
 	// Multiplex to alternate function mode 1 ([3:0] = 0001)
 	GPIOC->AFR[0] &= ~(14 << 4*4); // pin 4
@@ -51,19 +68,56 @@ int main(void)
 	GPIOC->AFR[0] |= (1 << 4*5);
 	
   // Set the Baud rate for communcation to be 115,200 bits/second. The system clock is 8 MHz.
-	USART3->BRR = HAL_RCC_GetHCLKFreq() / 69; // nice
+	USART3->BRR = HAL_RCC_GetHCLKFreq() / 115200;
 	
 	// Enable USART in the control register.
-	USART3->CR1 |= 6; // ..110, bit 2 enables the receiver and bit 3 enables the transmitter.
+	USART3->CR1 |= 12; // ..1100, bit 2 enables the receiver and bit 3 enables the transmitter.
 	USART3->CR1 |= 1;
-
-
-  while (1)
-  {
-  }
 }
 
-// __________________________________________________________________ Helper methods _______________________________________________
+/*
+* Initializes LEDs PC6-9
+*/
+void Init_LEDs(void) {
+	
+	// Initialize Port C: LEDs and pins
+	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+	
+	// Set the MODER to output mode (01)
+	GPIOC->MODER &= ~(1<< (2*6 +1) );
+	GPIOC->MODER &= ~(1<< (2*7 +1) );
+	GPIOC->MODER &= ~(1<< (2*8 +1) );
+	GPIOC->MODER &= ~(1<< (2*9 +1) );
+	
+	GPIOC->MODER |= 1 << 2*6;
+	GPIOC->MODER |= 1 << 2*7;
+	GPIOC->MODER |= 1 << 2*8;
+	GPIOC->MODER |= 1 << 2*9;
+	
+	// Set output type register to push-pull (0)
+	GPIOC->OTYPER &= ~(1<<6);
+	GPIOC->OTYPER &= ~(1<<7);
+	GPIOC->OTYPER &= ~(1<<8);
+	GPIOC->OTYPER &= ~(1<<9);
+	
+	// Set output speed register to low speed (x0)
+	GPIOC->OSPEEDR &= ~(1 << 2*6);
+	GPIOC->OSPEEDR &= ~(1 << 2*7);
+	GPIOC->OSPEEDR &= ~(1 << 2*8);
+	GPIOC->OSPEEDR &= ~(1 << 2*9);
+	
+	// Set the pins to no pull-up, pull-down (00)
+	GPIOC->PUPDR &= ~(3<<2*6);
+	GPIOC->PUPDR &= ~(3<<2*7);
+	GPIOC->PUPDR &= ~(3<<2*8);
+	GPIOC->PUPDR &= ~(3<<2*9);
+	
+	// Initialize each light to be on
+	GPIOC->ODR |= 1<<6;
+	GPIOC->ODR |= 1<<7;
+	GPIOC->ODR |= 1<<8;
+	GPIOC->ODR |= 1<<9;
+}
 
 /*
 * Does nothing while the transmit data register is empty.
@@ -72,6 +126,7 @@ int main(void)
 void Transmit_Char(char c) {
 	
 	while( !(USART3->ISR & (1<<7) ) ) {
+		//HAL_Delay(100);
 	}
 	USART3->TDR = c;
 }
@@ -79,9 +134,11 @@ void Transmit_Char(char c) {
 /*
 * Loops over each character in the "str" array and transmits the character there. 
 */
-void Transmit_String(char str[]) {
-	 for(int i = 0; str[i] != '\0'; i++)
+void Transmit_String(char* str) {
+	 for(int i = 0; str[i] != '\0'; i++) {
+		 //HAL_Delay(50);
 		 Transmit_Char(str[i]);
+	 }
 }
 
 /**

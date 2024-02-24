@@ -21,6 +21,7 @@
 void SystemClock_Config(void);
 void Transmit_Char(char c);
 void Transmit_String(char* str);
+void Process_TDR(char c);
 
 // Separations of concern.
 void Init_USART3(void);
@@ -40,9 +41,19 @@ int main(void)
 	Init_LEDs();
 	Init_USART3();
 	
-
   while (1) {
-		Transmit_String("Jeffery Epstein didn't kill himself.");
+		
+		// Test your transmission methods
+		// Transmit_String("Jeffery Epstein didn't kill himself.");
+		
+		// Part I check-off
+		
+		// Do nothing while the RECEIVE data register is empty, otherwise handle the (received) data inside it.
+		if( (USART3->ISR & (1<<5) ) ) {
+			Process_TDR( USART3->RDR & (0xFF) ); // Bottom 8 bits is the character.
+		}
+		
+		
   }
 }
 
@@ -139,6 +150,33 @@ void Transmit_String(char* str) {
 		 //HAL_Delay(50);
 		 Transmit_Char(str[i]);
 	 }
+}
+
+/*
+* Uses a switch statement to detect if the user typed in a letter corresponding to one of the four LEDs (r, g, b, o).
+* If the user's input was one of those then the corresponding LED is toggled. Otherwise an error message is displayed.
+*/
+void Process_TDR(char c) {
+	
+	switch(c) {
+		case '\0':
+			break;
+		case 'r':
+			GPIOC->ODR ^= 1 << 6;
+			break;
+		case 'g':
+			GPIOC->ODR ^= 1 << 9;
+			break;
+		case 'b':
+			GPIOC->ODR ^= 1 << 7;
+			break;
+		case 'o':
+			GPIOC->ODR ^= 1 << 8;
+			break;
+		default:
+			Transmit_String("You're only allowed to type one of the 4 colors. Try again nerd.");
+	}
+	
 }
 
 /**

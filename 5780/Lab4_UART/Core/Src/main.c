@@ -21,11 +21,17 @@
 void SystemClock_Config(void);
 void Transmit_Char(char c);
 void Transmit_String(char* str);
-void Process_TDR(char c);
+void Process_TDR_Part_I(char c);
+void Process_TDR_Part_II(char letter, char number);
+void USART3_4_IRQHandler(void);
 
 // Separations of concern.
 void Init_USART3(void);
 void Init_LEDs(void);
+
+// Global Variables
+volatile char received_byte;
+volatile uint8_t message_received_flag;
 
 
 /**
@@ -34,8 +40,10 @@ void Init_LEDs(void);
   */
 int main(void)
 {
+	// Initializations and Instantiations
   HAL_Init();
   SystemClock_Config();
+	message_received_flag = 0;
 	
 	// Enable all the peripherals we're using.
 	Init_LEDs();
@@ -49,9 +57,15 @@ int main(void)
 		// Part I check-off
 		
 		// Do nothing while the RECEIVE data register is empty, otherwise handle the (received) data inside it.
-		if( (USART3->ISR & (1<<5) ) ) {
-			Process_TDR( USART3->RDR & (0xFF) ); // Bottom 8 bits is the character.
-		}
+		//if( (USART3->ISR & (1<<5) ) ) {
+		//	Process_TDR_Part_I( USART3->RDR & (0xFF) ); // Bottom 8 bits is the character.
+		//}
+		
+		
+		// Part II check-off
+		
+		// Display a prompt to the user to get two characters.
+		Transmit_String("What would you have me do?");
 		
 		
   }
@@ -83,7 +97,26 @@ void Init_USART3(void) {
 	
 	// Enable USART in the control register.
 	USART3->CR1 |= 12; // ..1100, bit 2 enables the receiver and bit 3 enables the transmitter.
-	USART3->CR1 |= 1;
+	USART3->CR1 |= 1; // bit zero is the general enable bit.
+	
+	
+	// Enable the "receive register not empty interrrupt".
+	USART3->CR1 |= 1<<5;
+		
+	// Enable the inturrupt in the NVIC and set its priority.
+	NVIC_EnableIRQ(USART3_4_IRQn);
+	NVIC_SetPriority(USART3_4_IRQn, 2);
+}
+
+/*
+* Does nothing if the RECEIVE data register is empty, otherwise this method saves the data in the Receive data register (RDR)
+*  to a global variable and sets a flag indicating that action.
+*/
+void USART3_4_IRQHandler(void) {
+	if( (USART3->ISR & (1<<5) ) ) {
+		received_byte = USART3->RDR | 0xFF;
+		message_received_flag = 1;
+	}
 }
 
 /*
@@ -156,7 +189,7 @@ void Transmit_String(char* str) {
 * Uses a switch statement to detect if the user typed in a letter corresponding to one of the four LEDs (r, g, b, o).
 * If the user's input was one of those then the corresponding LED is toggled. Otherwise an error message is displayed.
 */
-void Process_TDR(char c) {
+void Process_TDR_Part_I(char c) {
 	
 	switch(c) {
 		case '\0':
@@ -177,6 +210,58 @@ void Process_TDR(char c) {
 			Transmit_String("You're only allowed to type one of the 4 colors. Try again nerd.");
 	}
 	
+}
+
+/*
+* Decodes the two input characters as an action.
+* The letter indicates which LED to change and the number indicates the action to take on it.
+* If the input is not in the set of predefined commands then an error message is displayed.
+*/
+void Process_TDR_Part_II(char letter, char number) {
+	
+	uint32_t LED_ID;
+	char action_ID;
+	
+	switch(letter) {
+		case '\0':
+			break;
+		case 'r':
+			LED_ID = 1 << 6;
+			Transmit_String("Red LED ");
+			break;
+		case 'g':
+			LED_ID = 1 << 9;
+		Transmit_String("Green LED ");
+			break;
+		case 'b':
+			LED_ID = 1 << 7;
+			Transmit_String("Blue LED ");
+			break;
+		case 'o':
+			LED_ID = 1 << 8;
+			Transmit_String("Orange LED ");
+			break;
+		default:
+			Transmit_String("Wrong color homie. ");
+			return;
+	}
+	
+	switch(number) {
+		case '\0':
+			Transmit_String("off. ");
+			GPIOC->ODR &= ~(LED_ID);
+			break;
+		case '1':
+			Transmit_String("on. ");
+			GPIOC->ODR |= LED_ID;
+			break;
+		case '2':
+			Transmit_String("toggle. ");
+			GPIOC->ODR ^= LED_ID;
+			break;
+		default:
+			Transmit_String("Wrong number. ");
+	}
 }
 
 /**

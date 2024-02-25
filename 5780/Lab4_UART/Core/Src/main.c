@@ -22,7 +22,7 @@ void SystemClock_Config(void);
 void Transmit_Char(char c);
 void Transmit_String(char* str);
 void Process_TDR_Part_I(char c);
-void Process_TDR_Part_II(char letter, char number);
+void Process_TDR_Part_II(char LED, char action_ID);
 void USART3_4_IRQHandler(void);
 
 // Separations of concern.
@@ -44,11 +44,18 @@ int main(void)
   HAL_Init();
   SystemClock_Config();
 	message_received_flag = 0;
+	received_byte = '&';
 	
 	// Enable all the peripherals we're using.
 	Init_LEDs();
 	Init_USART3();
 	
+	// Display a prompt to the user to get two characters.
+	Transmit_String("What would you have me do?");
+	
+	// Instantiate a null-terminated array to hold incoming messages.
+	char LED_ID;
+	char action_ID;
   while (1) {
 		
 		// Test your transmission methods
@@ -64,10 +71,32 @@ int main(void)
 		
 		// Part II check-off
 		
-		// Display a prompt to the user to get two characters.
-		Transmit_String("What would you have me do?");
+		// Receive the first character
+		while( !(USART3->ISR & (1<<5) )) {
+		}
+		received_byte = USART3->RDR & 0xFF;
+		Transmit_String("First character is "); Transmit_Char(received_byte);
 		
-		
+		// If it's a letter, save it and receive the second character.
+		if ( received_byte >= 'a' && received_byte <= 'z' ) {
+			LED_ID = received_byte;
+			
+			// Recieve the second character
+			while( !(USART3->ISR & (1<<5) )) {
+			}
+			received_byte = USART3->RDR & 0xFF;
+			Transmit_String("Second character is "); Transmit_Char(received_byte);
+			
+			// If it's a number then perform the corresponding action.
+			if(received_byte >= '0' && received_byte <= '2') {
+				Transmit_Char('\n');
+				action_ID = received_byte;
+				Process_TDR_Part_II(LED_ID, action_ID);
+				continue;
+			}
+		}
+		// Otherwise the input was invalid. Broadcast an error message and return the the beginning state.
+			Transmit_String("That's is not a valid command, Try again."); // Error message for invalid character
   }
 }
 
@@ -213,51 +242,48 @@ void Process_TDR_Part_I(char c) {
 }
 
 /*
-* Decodes the two input characters as an action.
-* The letter indicates which LED to change and the number indicates the action to take on it.
+* Decodes the input message as an action.
+* The first element is a letter that indicates which LED to change.
+* The second element is the number and indicates the action to take on it.
 * If the input is not in the set of predefined commands then an error message is displayed.
 */
-void Process_TDR_Part_II(char letter, char number) {
+void Process_TDR_Part_II(char LED_ID, char action_ID) {
 	
-	uint32_t LED_ID;
-	char action_ID;
-	
-	switch(letter) {
-		case '\0':
-			break;
+	int ODR_Value;
+	switch(LED_ID) {
 		case 'r':
-			LED_ID = 1 << 6;
+			ODR_Value = 1 << 6;
 			Transmit_String("Red LED ");
 			break;
 		case 'g':
-			LED_ID = 1 << 9;
+			ODR_Value = 1 << 9;
 		Transmit_String("Green LED ");
 			break;
 		case 'b':
-			LED_ID = 1 << 7;
+			ODR_Value = 1 << 7;
 			Transmit_String("Blue LED ");
 			break;
 		case 'o':
-			LED_ID = 1 << 8;
+			ODR_Value = 1 << 8;
 			Transmit_String("Orange LED ");
 			break;
 		default:
 			Transmit_String("Wrong color homie. ");
 			return;
 	}
-	
-	switch(number) {
-		case '\0':
+
+	switch(action_ID) {
+		case '0':
 			Transmit_String("off. ");
-			GPIOC->ODR &= ~(LED_ID);
+			GPIOC->ODR &= ~(ODR_Value);
 			break;
 		case '1':
 			Transmit_String("on. ");
-			GPIOC->ODR |= LED_ID;
+			GPIOC->ODR |= ODR_Value;
 			break;
 		case '2':
 			Transmit_String("toggle. ");
-			GPIOC->ODR ^= LED_ID;
+			GPIOC->ODR ^= ODR_Value;
 			break;
 		default:
 			Transmit_String("Wrong number. ");

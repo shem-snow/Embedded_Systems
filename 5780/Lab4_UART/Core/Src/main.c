@@ -44,14 +44,11 @@ int main(void)
   HAL_Init();
   SystemClock_Config();
 	message_received_flag = 0;
-	received_byte = '&';
+	received_byte = '&'; // I initialized it to some junk that would never be processed.
 	
 	// Enable all the peripherals we're using.
 	Init_LEDs();
 	Init_USART3();
-	
-	// Display a prompt to the user to get two characters.
-	Transmit_String("What would you have me do?");
 	
 	// Instantiate a null-terminated array to hold incoming messages.
 	char LED_ID;
@@ -71,21 +68,24 @@ int main(void)
 		
 		// Part II check-off
 		
+		// Display a prompt to the user to get two characters.
+		Transmit_String("\nWhat would you have me do?");
+		
 		// Receive the first character
 		while( !(USART3->ISR & (1<<5) )) {
 		}
 		received_byte = USART3->RDR & 0xFF;
-		Transmit_String("First character is "); Transmit_Char(received_byte);
+		Transmit_String("\nFirst character is "); Transmit_Char(received_byte);
 		
-		// If it's a letter, save it and receive the second character.
-		if ( received_byte >= 'a' && received_byte <= 'z' ) {
+		// If it's an accepted letter, save it and receive the second character.
+		if ( received_byte == 'r' || received_byte == 'g' || received_byte == 'b' || received_byte == 'o') {
 			LED_ID = received_byte;
 			
 			// Recieve the second character
 			while( !(USART3->ISR & (1<<5) )) {
 			}
 			received_byte = USART3->RDR & 0xFF;
-			Transmit_String("Second character is "); Transmit_Char(received_byte);
+			Transmit_String("\nSecond character is "); Transmit_Char(received_byte);
 			
 			// If it's a number then perform the corresponding action.
 			if(received_byte >= '0' && received_byte <= '2') {
@@ -96,7 +96,7 @@ int main(void)
 			}
 		}
 		// Otherwise the input was invalid. Broadcast an error message and return the the beginning state.
-			Transmit_String("That's is not a valid command, Try again."); // Error message for invalid character
+			Transmit_String("\nThat's is not a valid command, Try again."); // Error message for invalid character
   }
 }
 

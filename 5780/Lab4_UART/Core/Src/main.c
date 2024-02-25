@@ -89,14 +89,13 @@ int main(void)
 			
 			// If it's a number then perform the corresponding action.
 			if(received_byte >= '0' && received_byte <= '2') {
-				Transmit_Char('\n');
 				action_ID = received_byte;
 				Process_TDR_Part_II(LED_ID, action_ID);
 				continue;
 			}
 		}
-		// Otherwise the input was invalid. Broadcast an error message and return the the beginning state.
-			Transmit_String("\nThat's is not a valid command, Try again."); // Error message for invalid character
+		// Otherwise the input was invalid. Broadcast an error message and return to the beginning state.
+		Transmit_String("\nThat's is not a valid command, Try again."); // Error message for invalid character
   }
 }
 
@@ -253,22 +252,22 @@ void Process_TDR_Part_II(char LED_ID, char action_ID) {
 	switch(LED_ID) {
 		case 'r':
 			ODR_Value = 1 << 6;
-			Transmit_String("Red LED ");
+			Transmit_String("\nRed LED ");
 			break;
 		case 'g':
 			ODR_Value = 1 << 9;
-		Transmit_String("Green LED ");
+		Transmit_String("\nGreen LED ");
 			break;
 		case 'b':
 			ODR_Value = 1 << 7;
-			Transmit_String("Blue LED ");
+			Transmit_String("\nBlue LED ");
 			break;
 		case 'o':
 			ODR_Value = 1 << 8;
-			Transmit_String("Orange LED ");
+			Transmit_String("\nOrange LED ");
 			break;
 		default:
-			Transmit_String("Wrong color homie. ");
+			Transmit_String("\nWrong color homie. ");
 			return;
 	}
 

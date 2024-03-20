@@ -24,11 +24,12 @@
 void SystemClock_Config(void);
 void Init_LEDs(void);
 void Init_I2C2(void);
+void Init_Gyroscope(void);
 
 void Checkoff_One(void);
 void Checkoff_Two(void);
 
-void Read_Gyroscope(int numbytes, int *addr, int read_write, int reg_addr);
+void Read_Two_Bytes(int y_axis);
 
 // ___________________________Constants________________________________________
 int GREEN = (1 << 9);
@@ -36,19 +37,29 @@ int ORANGE = (1 << 8);
 int BLUE = (1 << 7);
 int RED = (1 << 6);
 
-int SDA = 11; // PB11
-int SCL = 13; // PB13
-int output = 14; // PB14
+int SDA = 11; // PB11 TODO:
+int SCL = 13; // PB13 TODO:
+int output = 14; // PB14 TODO:
+
+uint8_t x_1;
+uint8_t x_2;
+int16_t x_total;
+int16_t x_position = 0;
+
+uint8_t y_1;
+uint8_t y_2;
+int16_t y_total;
+int16_t y_position = 0;
 
 // _____________________________Program start______________________________________
 int main(void)
 {
 
-  /* Reset all peripherals, Initializes the Flash interface and the Systick. */
+  // Reset all peripherals, the Flash interface, and the Systick.
   HAL_Init();
 	SystemClock_Config();
 	
-	// Feed the clock into each peripherals we will be using to enable them
+	// Feed the clock into each peripherals we will be using to enable them.
 	RCC->AHBENR |= RCC_AHBENR_GPIOCEN; // GPIOC (bit 19)
 	RCC->AHBENR |= RCC_AHBENR_GPIOBEN; // GPIOB (bit 18)
 	RCC->APB1ENR |= (1 << 22); // I2C (bit 22)
@@ -58,17 +69,15 @@ int main(void)
 	Init_LEDs();
 	
 	
-	Checkoff_One();
+	//Checkoff_One();
 	
-	//Checkoff_Two();
+	Init_Gyroscope();
+	Checkoff_Two();
 	
 }
 
 // _________________Helper Methods________________________________________________________________________________________________________________________________
 
-/*
-* Initializes LEDs PC6-9
-*/
 void Init_LEDs(void) {
 	
 	// Set the MODER to output mode (01)
@@ -106,10 +115,6 @@ void Init_LEDs(void) {
 	GPIOC->BSRR = GPIO_BSRR_BR_8;
 	GPIOC->BSRR = GPIO_BSRR_BR_9;
 }
-
-/*
-* Initializes I2C
-*/
 void Init_I2C2(void) {
 	
 	// Set pins PB11 and PB13 on the discovery board to alternate function mode
@@ -173,7 +178,7 @@ void Checkoff_One(void) {
 	I2C2->CR2 |= (1 << 13); // Start generation
 	
 
-	// wait until either TXIS or NACKF flags are set
+	// Wait until either TXIS or NACKF flags are set
 	while( ! ( (I2C2->ISR & (1<<1) ) | (I2C2->ISR & (1<<4) ) ) ) {
 		// Turn on Red to indicate execution is stuck here.
 		GPIOC->ODR |= RED;
@@ -267,16 +272,48 @@ void Checkoff_One(void) {
 
 void Checkoff_Two(void) {
 	
-	// Clear CR2 bits for the fields: NBYTES, SADD, and RD_WRN
-	I2C2->CR2 &= ~( (0xFF << 16) | (0x3FF) | (1<<10) );
+	// Update the x and y positions two bytes at a time.
+	while(1) {
+		
+		// X
+		Read_Two_Bytes(0);
+		
+		// Y
+		Read_Two_Bytes(1);
+		
+		// If the x position is negative, turn on the orange LED and turn off the green LED
+		if (x_position < 0) {
+			GPIOC->ODR |= ORANGE;
+			GPIOC->ODR &= ~GREEN;
+		}
+		// Otherwise the x position is positive. Turn off orange and turn on green.
+		else {
+			GPIOC->ODR &= ~ORANGE;
+			GPIOC->ODR |= GREEN;
+		}
 	
-	// Configure CR2 for the current operation.
-	I2C2->CR2 |= (0xD2 << I2C_CR2_SADD_Pos);   // Set the L3GD20 slave address = 0x69 = 0110 1001; left shift: 0xD2 = 1101 0010
-	I2C2->CR2 |= (0x2  << I2C_CR2_NBYTES_Pos); // Set the number of bytes to transmit = 2
-	I2C2->CR2 &= ~(I2C_CR2_RD_WRN_Msk);        // Set the RD_WRN to write operation
-	I2C2->CR2 |= (I2C_CR2_START_Msk);          // Set START bit
+		// If the y position is negative, turn blue on and red off
+		if (y_position < 0) {
+			GPIOC->ODR |= BLUE;
+			GPIOC->ODR &= ~RED;
+		}
+		// Otherwise the y position is positive. Turn off blue and turn on red.
+		else {
+			GPIOC->ODR &= ~BLUE;
+			GPIOC->ODR |= RED;
+		}
+	}
 	
-	// Wait until TXIS or NACKF flags are set (1)
+}
+void Init_Gyroscope(void) {
+	
+	// Set the parameters for the current transaction (in CR2)
+	I2C2->CR2 |= (0x69 << 1); // Slave address = 0x69 << 1 = 0xD2 = 1101 0010
+	I2C2->CR2 |= (2  << 16); // NBYTES = 1
+	I2C2->CR2 &= ~(1 << 10); // Write direction
+	I2C2->CR2 |= (1 << 13); // Start generation
+	
+	// Wait until either TXIS or NACKF flags are set
 	while(1) {
 		if (I2C2->ISR & I2C_ISR_TXIS) {
 			// Write the address of the "CTRL_REG1" register into TXDR
@@ -288,16 +325,21 @@ void Checkoff_Two(void) {
 			;
 	}
 	
-	// Wait again until TXIS or NACKF flags are set (2)
+	// wait until either TXIS or NACKF flags are set
+	while( ! ( (I2C2->ISR & (1<<1) ) | (I2C2->ISR & (1<<4) ) ) ) {
+		// Turn on Red to indicate execution is stuck here.
+		GPIOC->ODR |= RED;
+		HAL_Delay(100);
+	}
+	
+	
+	// wait until either TXIS or NACKF flags are set
 	while(1) {
-		if (I2C2->ISR & I2C_ISR_TXIS) {
-			// Write the address of the "normal or sleep mode", enable x-axis and y-axis
+		if ( (I2C2->ISR & I2C_ISR_TXIS) | (I2C2->ISR & I2C_ISR_NACKF) ){
+			// Write the address of the "normal or sleep mode" into TXDR
 			I2C2->TXDR = 0x0B;
 			break;
 		}
-		
-		if (I2C2->ISR & I2C_ISR_NACKF)
-			;
 	}
 	
 	// Wait for TC flag is set
@@ -305,11 +347,167 @@ void Checkoff_Two(void) {
 		if (I2C2->ISR & I2C_ISR_TC)
 			break;
 	}
-	
-	// Set the STOP bit in CR2 to release the bus
-	//I2C2->CR2 |= (I2C_CR2_STOP);
 }
 
+/*
+* If the y_axis flag is 0 then we read the x-axis.
+* Otherwise we read the y-axis.
+*/
+void Read_Two_Bytes(int y_axis) {
+	
+	//____________________________________First Byte____________________________________________________
+	
+		// Clear the NBYTES SADD fields of CR2
+		I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
+		
+		// Set the parameters for the current transaction (in CR2 => CTRL_REG1) to WRITE
+		I2C2->CR2 |= (0xD2 << I2C_CR2_SADD_Pos); // Slave address = 0x69 << 1 = 0xD2 = 1101 0010
+		I2C2->CR2 |= (0x1  << I2C_CR2_NBYTES_Pos); // NBYTES = 1
+		I2C2->CR2 &= ~(I2C_CR2_RD_WRN_Msk); // Write direction
+		I2C2->CR2 |= (I2C_CR2_START_Msk); // Start generation
+	
+	
+		// Wait until TXIS or NACKF flags are set
+		while(1) {
+			if ((I2C2->ISR & I2C_ISR_TXIS)) {
+				I2C2->TXDR = (y_axis)? 0x2A : 0x28;
+				break;
+			}
+		
+			// If the slave did not respond, turn orange on to indicate failure
+			if ((I2C2->ISR & I2C_ISR_NACKF)) {
+				GPIOC->ODR |= ORANGE;
+				continue;
+			}
+		}
+	
+		// Wait until the TC flag is set
+		while(1) {
+			if (I2C2->ISR & I2C_ISR_TC) {
+				break;
+			}
+			
+			// Toggle red to indicate execution is stuck
+			//GPIOC->ODR ^= RED;
+		}
+	
+		// Set the parameters for the current transaction (in CR2 => CTRL_REG1) to READ
+		I2C2->CR2 |= (0xD2 << I2C_CR2_SADD_Pos);   // Slave address = 0x69 << 1 = 0xD2 = 1101 0010
+		I2C2->CR2 |= (0x1  << I2C_CR2_NBYTES_Pos); // NBYTES = 1
+		I2C2->CR2 |= (I2C_CR2_RD_WRN_Msk);         // Read Direction
+		I2C2->CR2 |= (I2C_CR2_START_Msk);          // Generate Start
+	
+		// Wait until RXNE or NACKF flags are set
+		while(1) {
+			// Then write the lower 8 bits
+			if ((I2C2->ISR & I2C_ISR_RXNE)) {
+				if (y_axis) {
+					y_1 = I2C2->RXDR;
+				}
+				else {
+					x_1 = I2C2->RXDR;
+				}
+				break;
+			}
+		
+			// If the slave did not respond, turn orange on to indicate failure
+			if ((I2C2->ISR & I2C_ISR_NACKF)) {
+				GPIOC->ODR |= ORANGE;
+				continue;
+			}
+		}
+	
+		// Wait for the TC flag to set
+		while(1) {
+			if (I2C2->ISR & I2C_ISR_TC) {
+				break;
+			}
+			
+			// Toggle red to indicate execution is stuck
+			//GPIOC->ODR ^= RED;
+		}
+	
+	
+		//____________________________________Second Byte____________________________________________________
+		
+		// Clear the NBYTES SADD fields of CR2
+		I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
+	
+		// Set the parameters for the current transaction (in CR2 => CTRL_REG1) to WRITE
+		I2C2->CR2 |= (0xD2 << I2C_CR2_SADD_Pos); // Slave address = 0x69 << 1 = 0xD2 = 1101 0010
+		I2C2->CR2 |= (0x1  << I2C_CR2_NBYTES_Pos); // NBYTES = 1
+		I2C2->CR2 &= ~(I2C_CR2_RD_WRN_Msk); // Write direction
+		I2C2->CR2 |= (I2C_CR2_START_Msk); // Start generation
+	
+		// Wait until TXIS or NACKF flags are set
+		while(1) {
+			if ((I2C2->ISR & I2C_ISR_TXIS)) {
+				I2C2->TXDR = (y_axis)? 0x2B : 0x29; // OUT_Y_H or OUT_X_H
+				break;
+			}
+		
+			// If the slave did not respond, turn orange on to indicate failure
+			if ((I2C2->ISR & I2C_ISR_NACKF)) {
+				GPIOC->ODR |= ORANGE;
+				continue;
+			}
+		}
+	
+		// Wait until the TC flag is set
+		while(1) {
+			if (I2C2->ISR & I2C_ISR_TC)
+				break;
+			
+			// Toggle red to indicate execution is stuck
+			//GPIOC->ODR ^= RED;
+		}
+	
+		// Set the parameters for the current transaction (in CR2 => CTRL_REG1) to READ
+		I2C2->CR2 |= (0xD2 << I2C_CR2_SADD_Pos); // Slave address = 0x69 << 1 = 0xD2 = 1101 0010
+		I2C2->CR2 |= (0x1  << I2C_CR2_NBYTES_Pos); // NBYTES = 1
+		I2C2->CR2 |= (I2C_CR2_RD_WRN_Msk); // Read Direction
+		I2C2->CR2 |= (I2C_CR2_START_Msk); // Generate Start
+	
+		// Wait until RXNE or NACKF flags are set
+		while(1) {
+			// Then write the upper 8 bits
+			if ((I2C2->ISR & I2C_ISR_RXNE)) {
+				if(y_axis)
+					y_2 = I2C2->RXDR;
+				else
+					x_2 = I2C2->RXDR;
+				break;
+			}
+		
+			// If the slave did not respond, turn orange on to indicate failure
+			if ((I2C2->ISR & I2C_ISR_NACKF)) {
+				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8);
+				continue;
+			}
+		}
+	
+		// Wait for the TC flag to set
+		while(1) {
+			if (I2C2->ISR & I2C_ISR_TC)
+				break;
+			
+			// Toggle red to indicate execution is stuck
+			//GPIOC->ODR ^= RED;
+		}
+	
+		// Store both bytes into the total
+		if(y_axis) {
+			y_total = (y_2 << 8) | (y_1 << 0);
+			y_position += y_total;
+		}
+		else {
+			x_total = (x_2 << 8) | (x_1 << 0);
+			x_position += x_total;
+		}
+	
+		// Delay 100 ms so only one read occurs during that time.
+		HAL_Delay(100);
+}
 
 // _________________System________________________________________________________________________________________________________________________________
 /**

@@ -69,10 +69,10 @@ int main(void)
 	Init_LEDs();
 	
 	
-	//Checkoff_One();
+	Checkoff_One();
 	
-	Init_Gyroscope();
-	Checkoff_Two();
+	//Init_Gyroscope();
+	//Checkoff_Two();
 	
 }
 
@@ -382,12 +382,14 @@ void Read_Two_Bytes(int y_axis) {
 		}
 	
 		// Wait until the TC flag is set
+		// int count = 0;
 		while(1) {
 			if (I2C2->ISR & I2C_ISR_TC) {
 				break;
 			}
 			
 			// Toggle red to indicate execution is stuck
+			// count += 1;
 			//GPIOC->ODR ^= RED;
 		}
 	

@@ -22,6 +22,24 @@ void Init_LEDs(void);
 void Init_ADC(void);
 void Init_DAC(void);
 
+void Calibrate_and_start_ADC(void);
+
+void Checkoff_1(void);
+void Checkoff_2(void);
+
+// Global variables -----------------------------------------
+const uint8_t sine_table[32] = {127,151,175,197,216,232,244,251,254,251,244,
+232,216,197,175,151,127,102,78,56,37,21,9,2,0,2,9,21,37,56,78,102}; // Sine Wave: 8-bit, 32 samples/cycle
+
+const uint8_t triangle_table[32] = {0,15,31,47,63,79,95,111,127,142,158,174,
+190,206,222,238,254,238,222,206,190,174,158,142,127,111,95,79,63,47,31,15};// Triangle Wave: 8-bit, 32 samples/cycle
+
+const uint8_t sawtooth_table[32] = {0,7,15,23,31,39,47,55,63,71,79,87,95,103,
+111,119,127,134,142,150,158,166,174,182,190,198,206,214,222,230,238,246};// Sawtooth Wave: 8-bit, 32 samples/cycle
+
+const uint8_t square_table[32] = {254,254,254,254,254,254,254,254,254,254,
+254,254,254,254,254,254,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // Square Wave: 8-bit, 32 samples/cycle (Don't use)
+
 int main(void)
 {
 
@@ -30,17 +48,31 @@ int main(void)
   SystemClock_Config();
 	
 	// Clock enables
+	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
 	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
 	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
 	RCC->APB1ENR |= RCC_APB1ENR_DACEN;
 	
-	// Configure PC0 (ON CHANNEL 10 as shown on page 37 in the M-0 manual) as ADC input and PA4 as DAC input.
+	// Configure PC0 (ON CHANNEL 10 as shown on page 37 in the M-0 manual) as ADC input and PA4 as DAC output (channel 1 page 38).
 	Init_ADC();
 	Init_DAC();
 	
+	// Self-calibrate the ADC.
+	Calibrate_and_start_ADC();
+	
   while (1) {
-		//
+		Checkoff_1();
+		// Checkoff_2();
   }
+}
+
+// __________________________________________________ Lab checkoffs _______________________________________________________________
+void Checkoff_1(void) {
+	
+}
+	
+void Checkoff_2(void) {
+	
 }
 
 // __________________________________________________ Helper methods _______________________________________________________________
@@ -85,8 +117,8 @@ void Init_LEDs(void) {
 
 void Init_ADC(void) {
 	
-	GPIOC->MODER |= 3 << 0; // Analog mode
-	GPIOC->PUPDR &= ~(3 << 0); // No pull-up, pull down
+	GPIOC->MODER |= 3 << 0; // Analog mode (11)
+	GPIOC->PUPDR &= ~(3 << 0); // No pull-up, pull down (00)
 	ADC1->CHSELR |= (1 << 10 ); // Configure the pin for ADC conversion on channel 10
 	
 	// 8-bit resolution (10)
@@ -101,6 +133,45 @@ void Init_ADC(void) {
 }
 
 void Init_DAC(void) {
+	// Configure PA4
+	GPIOA->MODER |= 3 << 8; // Analog mode (11)
+	GPIOA->PUPDR &= ~(3 << 8); // No pull-up, pull down (00)
+	GPIOA->OTYPER &= ~(3 <<8); // Push/Pull (00)
+	GPIOA->OSPEEDR &= ~(3 <<8); // Low speed (00)
+	
+	// Actually initialize the DAC
+	DAC1->CR &= ~(7 << 19); // Software-triggered (111)
+	DAC1->CR |= 1; // Enable the DAC Channel 1
+}
+
+void Calibrate_and_start_ADC(void) {
+	
+	// ___________________Calibrate (reference appendix A.7.1)___________________
+	// Calibration is initialted when ADEN = 1. So initialize it to zero/disable it.
+	if( (ADC1->CR & ADC_CR_ADEN) !=0)
+		ADC1->CR |= 1 << 1;
+	// Wait for the action to complete.
+	while ( (ADC1->CR & ADC_CR_ADEN) != 0) {
+	}
+	// Clear the DMA bit so 
+	ADC1->CFGR1 &= ~(1);
+	// Trigger the calibration in the control register
+	ADC1->CR |= (1 << 31);
+	// Wait for the action to complete.
+	while ( (ADC1->CR & ADC_CR_ADCAL) != 0) {
+	}
+	
+	
+	// ___________________ Enable Sequence code (reference appendix A.7.1)___________________
+	if( (ADC1->ISR & ADC_ISR_ADRDY) != 0)
+		ADC1->ISR |= ADC_ISR_ADRDY;
+	ADC1->CR |= ADC_CR_ADEN;
+	// Wait for the action to complete
+	while ( (ADC1->ISR & ADC_ISR_ADRDY) == 0 ) {
+	}
+	
+	// _____________________ Start _____________________
+	ADC1->CR |= (1 << 2)
 	
 }
 // __________________________________________________ System _______________________________________________________________

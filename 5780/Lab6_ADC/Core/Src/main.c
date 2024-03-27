@@ -19,7 +19,8 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void Init_LEDs(void);
-void Init_PC0(void);
+void Init_ADC(void);
+void Init_DAC(void);
 
 int main(void)
 {
@@ -28,10 +29,15 @@ int main(void)
   HAL_Init();
   SystemClock_Config();
 	
+	// Clock enables
 	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
+	RCC->APB1ENR |= RCC_APB1ENR_DACEN;
 	
-	// Any general purpose pin can be used as ADC input. I choose PC0.
-	Init_PC0();
+	// Configure PC0 (ON CHANNEL 10 as shown on page 37 in the M-0 manual) as ADC input and PA4 as DAC input.
+	Init_ADC();
+	Init_DAC();
+	
   while (1) {
 		//
   }
@@ -76,9 +82,26 @@ void Init_LEDs(void) {
 	GPIOC->BSRR = GPIO_BSRR_BR_9;
 }
 
-void Init_PC0(void) {
+
+void Init_ADC(void) {
+	
 	GPIOC->MODER |= 3 << 0; // Analog mode
 	GPIOC->PUPDR &= ~(3 << 0); // No pull-up, pull down
+	ADC1->CHSELR |= (1 << 10 ); // Configure the pin for ADC conversion on channel 10
+	
+	// 8-bit resolution (10)
+	ADC1->CFGR1 |= (2 << 3);
+	ADC1->CFGR1 &= ~(1 << 3);
+	
+	// Continuous conversion mode
+	ADC1->CFGR1 |= (1 << 13);
+	
+	// Hardware triggers disabled (software-triggered only)
+	ADC1->CFGR1 &= ~(3 << 10);
+}
+
+void Init_DAC(void) {
+	
 }
 // __________________________________________________ System _______________________________________________________________
 void SystemClock_Config(void)

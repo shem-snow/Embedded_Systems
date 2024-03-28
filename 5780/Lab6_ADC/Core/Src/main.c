@@ -28,6 +28,7 @@ void Checkoff_1(void);
 void Checkoff_2(void);
 
 // Global variables -----------------------------------------
+int table_index = 0;
 const uint8_t sine_table[32] = {127,151,175,197,216,232,244,251,254,251,244,
 232,216,197,175,151,127,102,78,56,37,21,9,2,0,2,9,21,37,56,78,102}; // Sine Wave: 8-bit, 32 samples/cycle
 
@@ -42,7 +43,6 @@ const uint8_t square_table[32] = {254,254,254,254,254,254,254,254,254,254,
 
 int main(void)
 {
-
   // Initializations
   HAL_Init();
   SystemClock_Config();
@@ -62,7 +62,7 @@ int main(void)
 	
   while (1) {
 		Checkoff_1();
-		// Checkoff_2();
+		Checkoff_2();
   }
 }
 
@@ -102,6 +102,15 @@ void Checkoff_1(void) {
 	
 void Checkoff_2(void) {
 	
+	// Write the chosen table into the data holding register one value at a time with a 100 ms delay.
+	DAC1->DHR8R1 = sine_table[table_index];
+	//DAC1->DHR8R1 = triangle_table[table_index];
+	//DAC1->DHR8R1 = sawtooth_table[table_index];
+	
+	// Reset the index
+	table_index = (table_index = 31)? 0 : table_index + 1;
+	
+	HAL_Delay(100);
 }
 
 // __________________________________________________ Helper methods _______________________________________________________________

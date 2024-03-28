@@ -69,6 +69,35 @@ int main(void)
 // __________________________________________________ Lab checkoffs _______________________________________________________________
 void Checkoff_1(void) {
 	
+	int32_t RED = 1 << 6;
+	int32_t GREEN = 1 << 9;
+	int32_t BLUE = 1 << 7;
+	int32_t ORANGE = 1 << 8;
+	
+	// Store the analog signal into a variable
+	int16_t sig = ADC1->DR;
+	
+	// Use the 4 LEDs as threshold values to determine its magnitude
+	if(sig < 8) // Keep all the LEDs off
+		GPIOC->ODR &= ~(RED | GREEN | BLUE | ORANGE);
+	else if (8 < sig & sig < 16) {
+		// Turn RED on
+		GPIOC->ODR &= ~(GREEN | BLUE | ORANGE);
+		GPIOC->ODR |= RED;
+	}
+	else if (16 < sig & sig < 32) {
+		// Turn GREEN on
+		GPIOC->ODR &= ~(BLUE | ORANGE);
+		GPIOC->ODR |= (RED | GREEN);
+	}
+	else if (32 < sig & sig < 64) {
+		// Turn BLUE on
+		GPIOC->ODR &= ~ORANGE;
+		GPIOC->ODR |= (RED | GREEN | BLUE);
+	}
+	else// 64 < sig
+		// Turn ORANGE on
+		GPIOC->ODR |= (RED | GREEN | BLUE | ORANGE);
 }
 	
 void Checkoff_2(void) {

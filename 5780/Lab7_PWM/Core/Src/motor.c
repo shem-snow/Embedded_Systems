@@ -1,10 +1,17 @@
 /* -------------------------------------------------------------------------------------------------------------
  *  Motor Control and Initialization Functions
  * -------------------------------------------------------------------------------------------------------------
+ * This lab makes so we can control a motor using a push button.
+ * Pressing the button progresses the system into the following states in order:
+ * 
+ * - Speed changes from 0 to 80 RPM
+ * - Speed changes from 80 to 50 RPM
+ * - Speed changes from 50 to 80 RPM
+ * - Speed changes from 80 to 0 RPM
  */
 #include "motor.h"
 
-volatile int16_t error_integral = 0;    // Integrated error signal
+volatile int16_t error_integral = 0;  // Integrated error signal
 volatile uint8_t duty_cycle = 0;    	// Output PWM duty cycle
 volatile int16_t target_rpm = 0;    	// Desired speed target
 volatile int16_t motor_speed = 0;   	// Measured motor speed
@@ -138,28 +145,26 @@ void ADC_init(void) {
     while(!(ADC1->ISR & ADC_ISR_ADRDY));    // Wait until ADC ready
     ADC1->CR |= ADC_CR_ADSTART;             // Signal conversion start
 }
-
+/* Run PI control loop
+*
+* Make sure to use the indicated variable names. This allows STMStudio to monitor
+* the condition of the system!
+*
+* target_rpm -> target motor speed in RPM
+* motor_speed -> raw motor speed in encoder counts
+* error -> error signal (difference between measured speed and target)
+* error_integral -> integrated error signal
+* Kp -> Proportional Gain
+* Ki -> Integral Gain
+* output -> raw output signal from PI controller
+* duty_cycle -> used to report the duty cycle of the system 
+* adc_value -> raw ADC counts to report current
+*
+*/
 void PI_update(void) {
-    
-    /* Run PI control loop
-     *
-     * Make sure to use the indicated variable names. This allows STMStudio to monitor
-     * the condition of the system!
-     *
-     * target_rpm -> target motor speed in RPM
-     * motor_speed -> raw motor speed in encoder counts
-     * error -> error signal (difference between measured speed and target)
-     * error_integral -> integrated error signal
-     * Kp -> Proportional Gain
-     * Ki -> Integral Gain
-     * output -> raw output signal from PI controller
-     * duty_cycle -> used to report the duty cycle of the system 
-     * adc_value -> raw ADC counts to report current
-     *
-     */
-    
-    /// TODO: calculate error signal and write to "error" variable
-    
+	
+	// Calculate error signal and write it to the "error" variable
+  error = 2*target_rpm - motor_speed;
     /* Hint: Remember that your calculated motor speed may not be directly in RPM!
      *       You will need to convert the target or encoder speeds to the same units.
      *       I recommend converting to whatever units result in larger values, gives
@@ -167,19 +172,24 @@ void PI_update(void) {
      */
     
     
-    /// TODO: Calculate integral portion of PI controller, write to "error_integral" variable
-    
-    /// TODO: Clamp the value of the integral to a limited positive range
-    
+  // Calculate integral portion of PI controller, write to "error_integral" variable
+	error_integral = (error_integral + (error*duty_cycle));
+	
+  // Clamp the value of the integral to a limited positive range (0-3200).
+  if(error_integral < 0)
+		error_integral = 0;
+	else if(error_integral > 3200)
+		error_integral = 3200;
+	
+	
     /* Hint: The value clamp is needed to prevent excessive "windup" in the integral.
      *       You'll read more about this for the post-lab. The exact value is arbitrary
      *       but affects the PI tuning.
      *       Recommend that you clamp between 0 and 3200 (what is used in the lab solution)
      */
     
-    /// TODO: Calculate proportional portion, add integral and write to "output" variable
-    
-    int16_t output = 0; // Change this!
+  // Calculate proportional portion, add integral and write to "output" variable
+  int16_t output = (Kp*error) + Ki * error_integral;
     
     /* Because the calculated values for the PI controller are significantly larger than 
      * the allowable range for duty cycle, you'll need to divide the result down into 
@@ -197,9 +207,15 @@ void PI_update(void) {
      * required for tuning.
      */
 
-     /// TODO: Divide the output into the proper range for output adjustment
-     
-     /// TODO: Clamp the output value between 0 and 100 
+   // Divide the output into the proper range for output adjustment
+   output = output >> 5;
+   
+	 
+	 // Clamp the output value between 0 and 100
+	 if(output < 0)
+		 output = 0;
+	 else if(output > 100)
+		 output = 100;
     
     pwm_setDutyCycle(output);
     duty_cycle = output;            // For debug viewing

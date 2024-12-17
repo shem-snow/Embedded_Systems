@@ -19,6 +19,9 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void Setup(void);
+void Checkoff1(void);
+void Checkoff2(void);
 
 int main(void){
 	
@@ -34,7 +37,28 @@ int main(void){
 	RCC->AHBENR |= RCC_AHBENR_GPIOCEN; // on lines 449 and 7869
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // on line 7863
 	
-	// ______________________________________ Part I ________________________________________
+	Setup(); 
+	
+	//Checkoff1();
+	Checkoff2();
+}
+
+void Setup(void) {
+	// 1: Set the MODER pin to input mode (00).
+	GPIOA->MODER &= ~(3); // 111100
+	
+	// 2: Set the OSPEEDR register to low speed (x0).
+	GPIOA->OSPEEDR &= ~1;
+	
+	// 3: Set the PUPDR register to pull-down (10).
+	GPIOA->PUPDR &= ~3; // xx..00
+	GPIOA->PUPDR |= 2; // xx..10
+	
+	uint32_t RED = 1 << 6;
+	uint32_t BLUE = 1 << 7;
+	uint32_t ORANGE = 1 << 8;
+	uint32_t GREEN = 1 << 9;
+	
 	
 	// 1: Set the MODER pins PC6 (blue) and PC7 (red) to general purpose output mode (01).
 	
@@ -69,31 +93,24 @@ int main(void){
 	// Step two: set to 10
 	mask = 2 << 6; // 00..10..00
 	GPIOC->ODR |= mask; // xx..10..xx
-	
+}
+
+
+void Checkoff1() {
 	
 	// Use this loop to make the red and blue LEDs toggle automatically.
-	//while (1) {
-	//	HAL_Delay(200);
-	//	mask = (3 << 6); // 00..11..00
-	//	GPIOC->ODR ^= mask; // xx..~(xx)..xx
-	//}
-	
-	
-	// ______________________________________ Part II ________________________________________
-	
-	// 1: Set the MODER pin to input mode (00).
-	GPIOA->MODER &= ~(3); // 111100
-	
-	// 2: Set the OSPEEDR register to low speed (x0).
-	GPIOA->OSPEEDR &= ~1;
-	
-	// 3: Set the PUPDR register to pull-down (10).
-	GPIOA->PUPDR &= ~3; // xx..00
-	GPIOA->PUPDR |= 2; // xx..10
-	
-	// Toggle the output state of both PC6 (blue) and PC7 (red) every time the user button is pressed.
+	uint32_t mask = (3 << 6); // 00..11..00
+	while (1) {
+		HAL_Delay(200);
+		GPIOC->ODR ^= mask; // xx..~(xx)..xx
+	}
+}
+
+
+void Checkoff2() {
+		// Toggle the output state of both PC6 (blue) and PC7 (red) every time the user button is pressed.
 	uint32_t debouncer = 0;
-	mask = (3 << 6); // 00..11..00
+	uint32_t mask = (3 << 6); // 00..11..00
 	while (1) {
 		
 		// Shift the debouncer left at every loop iteration
@@ -113,7 +130,7 @@ int main(void){
 		}
 	}
 }
-
+// ______________________________________ System Setup Stuff ________________________________________
 /**
   * @brief System Clock Configuration
   * @retval None

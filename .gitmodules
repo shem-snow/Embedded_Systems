@@ -1,0 +1,3 @@
+[submodule "5780/embedded-systems-template"]
+	path = 5780/embedded-systems-template
+	url = https://github.com/lnis-uofu/embedded-systems-template.git

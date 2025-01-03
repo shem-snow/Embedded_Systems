@@ -20,7 +20,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f0xx_it.h"
-/* Private includes ----------------------------------------------------------*/
+
+// volatile int accumulator;
+
 /******************************************************************************/
 /*           Cortex-M0 Processor Interruption and Exception Handlers          */
 /******************************************************************************/
@@ -29,14 +31,9 @@
   */
 void NMI_Handler(void)
 {
-  /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
-
-  /* USER CODE END NonMaskableInt_IRQn 0 */
-  /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
    while (1)
   {
   }
-  /* USER CODE END NonMaskableInt_IRQn 1 */
 }
 
 /**
@@ -44,13 +41,8 @@ void NMI_Handler(void)
   */
 void HardFault_Handler(void)
 {
-  /* USER CODE BEGIN HardFault_IRQn 0 */
-
-  /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
-    /* USER CODE BEGIN W1_HardFault_IRQn 0 */
-    /* USER CODE END W1_HardFault_IRQn 0 */
   }
 }
 
@@ -59,12 +51,6 @@ void HardFault_Handler(void)
   */
 void SVC_Handler(void)
 {
-  /* USER CODE BEGIN SVC_IRQn 0 */
-
-  /* USER CODE END SVC_IRQn 0 */
-  /* USER CODE BEGIN SVC_IRQn 1 */
-
-  /* USER CODE END SVC_IRQn 1 */
 }
 
 /**
@@ -72,12 +58,6 @@ void SVC_Handler(void)
   */
 void PendSV_Handler(void)
 {
-  /* USER CODE BEGIN PendSV_IRQn 0 */
-
-  /* USER CODE END PendSV_IRQn 0 */
-  /* USER CODE BEGIN PendSV_IRQn 1 */
-
-  /* USER CODE END PendSV_IRQn 1 */
 }
 
 /**
@@ -85,18 +65,19 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
+
   HAL_IncTick();
-  
-	static int accumulator; // You can also declare a global and volatile accumulator.
-	
-	// Toggle the LED every 200 ms
-	if(accumulator >= 200) {
-		GPIOC->ODR ^= (1 << 7); // Blue
-		accumulator = 0;
-	}
-	else
-		accumulator +=1;
-	
+
+  // This accumulating variable can be either local-static or global-volatile. Both will work.
+  static int accumulator;
+
+  // Toggle the blue LED every 200 ms
+  if(accumulator >= 200) {
+	  GPIOC->ODR ^= (1 << 7);
+	  accumulator = 0;
+  }
+  else
+	  accumulator +=1;
 }
 
 /******************************************************************************/
@@ -106,6 +87,3 @@ void SysTick_Handler(void)
 /* please refer to the startup file (startup_stm32f0xx.s).                    */
 /******************************************************************************/
 
-/* USER CODE BEGIN 1 */
-
-/* USER CODE END 1 */

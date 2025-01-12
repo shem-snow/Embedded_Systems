@@ -51,7 +51,8 @@ Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr.c \
 Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr_ex.c \
 Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_flash.c \
 Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_flash_ex.c \
-Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_exti.c
+Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_exti.c \
+# Src/lab1.c  # TODO: lab1 code. This line is not needed because $(wildcard Src/*.c) already includes all .c files in Src/. 
 
 # ASM sources
 ASM_SOURCES =  \
@@ -79,7 +80,8 @@ AS_DEFS =
 # C defines
 C_DEFS =  \
 -DUSE_HAL_DRIVER \
--DSTM32F072xB
+-DSTM32F072xB \
+-DLAB1 # Define Lab 1
 
 
 # AS includes

@@ -123,7 +123,7 @@ LIBDIR =
 LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS)
 
 program: $(BUILD_DIR)/$(TARGET).bin
-	$(ST_FLASH) --reset --flash=128k write $< 0x8000000 --connect-under-reset
+	$(ST_FLASH) --reset --flash=128k --connect-under-reset write $< 0x8000000 
 
 #######################################
 # build the application

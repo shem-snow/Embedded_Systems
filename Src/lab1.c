@@ -1,4 +1,4 @@
-/*
+
 #include "main.h"
 #include <stm32f0xx_hal.h> // Ensure HAL is included
 
@@ -25,4 +25,3 @@ int lab1_main(void) {
         HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9);
     }
 }
-*/

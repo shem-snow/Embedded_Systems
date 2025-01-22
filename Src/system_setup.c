@@ -2,6 +2,10 @@
 #include <stm32f0xx_hal.h>
 #include <stm32f072b_discovery.h>
 
+// USE_FULL_ASSERT must be defined in order to use it.
+#define USE_FULL_ASSERT
+
+
 /**
   * @brief  This function is executed in case of error occurrence.
   * @param  None
@@ -76,14 +80,12 @@ void SystemClock_Config(void)
   * @param  line: assert_param error line source number
   * @retval None
   */
-void assert_failed(uint8_t* file, uint32_t line)
-{
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-
-  /* Infinite loop */
-  while (1)
-  {
+void assert_failed(uint8_t* file, uint32_t line) {
+  // User may define their own response to errors.
+  while(1) {
+    // I chose to blink the red LED.
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_6);
+    HAL_Delay(500);
   }
 }
 #endif

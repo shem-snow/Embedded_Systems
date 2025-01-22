@@ -1,6 +1,9 @@
 #include "main.h"
 #include <stm32f0xx_hal.h>
 
+/*
+  TODO: Convert the old solutions into the self-implemented HAL and verify all checkoffs work.
+*/
 int main(void)
 {
   #if defined(LAB1)

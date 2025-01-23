@@ -24,11 +24,13 @@ int lab1_main(void) {
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET); // Start PC6 (red) high
 
     // Test assert because the instructions said to.
-    assert_param(GPIO->MODER == 0x123456);
+    assert_param(GPIO->MODER == 0x123456); // TODO: This will only freeze the program when it evaluates to false. For some reason the "assert_failed" method does not trigger.
 
     // Do the lab
     //Checkoff2();
     Checkoff3();
+
+    return 0;
 }
 
 

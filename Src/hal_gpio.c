@@ -12,7 +12,30 @@ void HAL_RCC_GPIOA_CLK_Enable(void) {
 
 void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init) {
 
+
 	// _____________________________ Push Button ________________________________________
+	
+	
+///*
+	// Self-implemented HAL way
+
+	// These are the setting that make the push button function.
+	GPIO_InitTypeDef PushButton_Settings = {0, GPIO_MODE_INPUT , GPIO_SPEED_FREQ_LOW, GPIO_PULLDOWN};
+	// First reset all the bits to zero so you can just AND with the struct items.
+	GPIOA[PushButton_Settings.Pin].MODER &= ~3; // Two bit register.
+	GPIOA[PushButton_Settings.Pin].OSPEEDR &= ~3; // Two bit register.
+	GPIOA[PushButton_Settings.Pin].PUPDR &= ~3; // Two bit register.
+	// LEDs also have the OTYPER which is one bit so for them use &= ~1 on the OTYPER.
+
+	// Then set each each of the 'high' pins by ANDing with the mask. 
+	GPIOA[PushButton_Settings.Pin].MODER &= PushButton_Settings.Mode;
+	GPIOA[PushButton_Settings.Pin].OSPEEDR &= PushButton_Settings.Speed;
+	GPIOA[PushButton_Settings.Pin].PUPDR &= PushButton_Settings.Pull;
+//*/
+	// TODO: I manually put '0' as the pin because the actual address for pin 0 is different.
+	
+	/* 
+		Direct way
 
 	// 1: Set the MODER pin to input mode (00).
 	GPIOA->MODER &= ~(3); // 111100
@@ -23,7 +46,7 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init) {
 	// 3: Set the PUPDR register to pull-down (10).
 	GPIOA->PUPDR &= ~3; // xx..00
 	GPIOA->PUPDR |= 2; // xx..10
-	
+	*/
 	
 	/* _____________________________ LEDs ________________________________________
 

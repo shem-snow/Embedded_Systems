@@ -3,7 +3,7 @@
 #include <stm32f0xx_hal.h> // Ensure HAL is included
 
 /*
-Idealy, there would be 
+Idealy, I could just do 
 
 #define assert(expr) ((expr) ? 0 : assert_failed())
 

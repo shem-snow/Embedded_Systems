@@ -1,5 +1,5 @@
 #include "main.h"
-#include "assert.h"
+// #include "assert.h"
 #include <stm32f0xx_hal.h> // Ensure HAL is included
 
 void Checkoff2(void);
@@ -10,21 +10,18 @@ int lab1_main(void) {
     HAL_Init(); // Reset of all peripherals, init the Flash and Systick
     SystemClock_Config(); //Configure the system clock
 
-    // Enable the GPIOC peripheral (for the LEDs)
-    HAL_RCC_GPIOC_CLK_Enable();
-
-    // Enable the GPIOA peripheral (for the push button)
-    HAL_RCC_GPIOA_CLK_Enable();
+    // Enable the peripherals for LEDs (GPIOC) and the push button (GPIOA)
+    HAL_RCC_GPIOX_CLK_Enable('C');
+    HAL_RCC_GPIOX_CLK_Enable('A');
 
     // Set up a configuration struct to pass to the initialization function for LEDs
     GPIO_InitTypeDef initStr = {GPIO_PIN_6 | GPIO_PIN_7, GPIO_MODE_OUTPUT_PP, GPIO_SPEED_FREQ_LOW, GPIO_NOPULL};
 
     // Test assert to verify you're setting the right values.
-    assert_param(GPIO->MODER == 0x123456); // TODO: This will only freeze the program when it evaluates to false. For some reason the "assert_failed" method does not trigger.
-
+    // assert_param(GPIO->MODER == 0x123456); // TODO: Make so asserts actually do something useful.
+    
     // Initialize the red and blue LEDs
     HAL_GPIO_Init(GPIOC, &initStr); 
-
 
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET); // Start PC6 (red) high
 

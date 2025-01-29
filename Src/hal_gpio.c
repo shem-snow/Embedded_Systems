@@ -2,12 +2,29 @@
 #include <stm32f0xx_hal.h>
 #include <stm32f0xx_hal_gpio.h>
 
-void HAL_RCC_GPIOC_CLK_Enable(void) {
-    RCC->AHBENR |= RCC_AHBENR_GPIOCEN; // on lines 449 (RCC_TypeDef struct) and 7869 of the device's header file.
-}
+void HAL_RCC_GPIOX_CLK_Enable(char X){
+	switch (X) {
+		case 'A':
+			RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+    		break;
+  		case 'B':
+			RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+    		break;
+		case 'C':
+			RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+    		break;
+		case 'D':
+			RCC->AHBENR |= RCC_AHBENR_GPIODEN;
+    		break;
+		case 'E':
+			RCC->AHBENR |= RCC_AHBENR_GPIOEEN;
+    		break;
+		case 'F':
+			RCC->AHBENR |= RCC_AHBENR_GPIOFEN;
+    		break;
+  		default:
+	}
 
-void HAL_RCC_GPIOA_CLK_Enable(void) {
-    RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // on line 7863
 }
 
 void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init) {
@@ -83,11 +100,9 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init) {
 }
 
 
-/*
 void HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin)
 {
 }
-*/
 
 /*
 GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)

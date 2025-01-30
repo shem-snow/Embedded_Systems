@@ -1,3 +1,18 @@
+/*
+	Files that will be useful to understanding the repository are:
+		- stm32f072xb.h: Defines data types 
+			for example, GPIO_TypeDef is a struct with all the registers in a GPIO peripheral (on line 382).
+	
+	If you're ever unsure of a data type or what values to assign it, you can most likely find that information in the files:
+			./Drivers/STM32F0xx_HAL_Driver/<"Inc" for header files or "Src" for source files>/stm32f0xx_hal_xxxx.<c or h>
+			where "xxxx" is whatever peripheral uses the data type you're wondering about.
+		A common one is GPIO_PinState which can be GPIO_PIN_RESET or GPIO_PIN_SET.
+	
+	A common function parameter used here is "GPIO_InitTypeDef *" which is a pointer to a struct intended to hold items which are
+	just integers that encode each value/setting for peripheral registers. The intention is that you decide all the settings you
+	want to configure a pin with. Put those settings in said struct. then pass the struct into the function which configures the pin.
+
+*/
 #include <stdint.h>
 #include <stm32f0xx_hal.h>
 #include <stm32f0xx_hal_gpio.h>
@@ -24,46 +39,38 @@ void HAL_RCC_GPIOX_CLK_Enable(char X){
     		break;
   		default:
 	}
-
 }
 
-void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init) {
+/*
+	Be aware of the assumption that bits are cleared prior to being initialized. We This funciton only ORs to make more bits equal to 1. 
+*/
+void HAL_GPIO_Init(char X, GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init) {
 
-
-	// _____________________________ Push Button ________________________________________
-	
-	
-///*
-	// Self-implemented HAL way
-
-	// These are the setting that make the push button function.
-	GPIO_InitTypeDef PushButton_Settings = {0, GPIO_MODE_INPUT , GPIO_SPEED_FREQ_LOW, GPIO_PULLDOWN};
-	// First reset all the bits to zero so you can just AND with the struct items.
-	GPIOA->MODER &= ~3; // Two bit register.
-	GPIOA->OSPEEDR &= ~3; // Two bit register.
-	GPIOA->PUPDR &= ~3; // Two bit register.
-	// LEDs also have the OTYPER which is one bit so for them use &= ~1 on the OTYPER.
-
-	// Then set each each of the 'high' bits by ANDing with the mask. 
-	GPIOA->MODER &= (PushButton_Settings.Mode << (2 * PushButton_Settings.Pin) );
-	GPIOA->OSPEEDR &= (PushButton_Settings.Speed << (2 * PushButton_Settings.Pin) );
-	GPIOA->PUPDR &= (PushButton_Settings.Pull << (2 * PushButton_Settings.Pin) );
-//*/
-	// TODO: I manually put '0' as the pin because the actual address for pin 0 is different.
-	
-	/* 
-		Direct way
-
-	// 1: Set the MODER pin to input mode (00).
-	GPIOA->MODER &= ~(3); // 111100
-
-	// 2: Set the OSPEEDR register to low speed (x0).
-	GPIOA->OSPEEDR &= ~1;
-
-	// 3: Set the PUPDR register to pull-down (10).
-	GPIOA->PUPDR &= ~3; // xx..00
-	GPIOA->PUPDR |= 2; // xx..10
-	*/
+	switch (X) {
+		case 'A': // The Push button
+			// These are the settings that make the push button function. GPIO_InitTypeDef PushButton_Settings = {pinnumber_0, GPIO_MODE_INPUT , GPIO_SPEED_FREQ_LOW, GPIO_PULLDOWN};
+			// These settings will be passes through the parameter.
+			GPIOA->MODER &= (GPIO_Init.Mode << (2 * PushButton_Settings.Pin) );
+			GPIOA->OSPEEDR &= (GPIO_Init.Speed << (2 * PushButton_Settings.Pin) );
+			GPIOA->PUPDR &= (GPIO_Init.Pull << (2 * PushButton_Settings.Pin) );
+    		break;
+		case 'B':
+			// TODO:
+    		break;
+		case 'C': // LEDs
+			// TODO:
+    		break;
+		case 'D':
+			// TODO:
+    		break;
+		case 'E':
+			// TODO:
+    		break;
+		case 'F':
+			// TODO:
+    		break;
+  		default:
+	}
 	
 	/* _____________________________ LEDs ________________________________________
 
@@ -99,19 +106,54 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init) {
 	GPIOC->PUPDR &= ~mask; // xx..0000..xx
 }
 
+/*
+	Clears (sets to zero) the bits corresponding to "Pin_Number" in all the registers we use to setup that peripheral.
+*/
+void HAL_GPIO_DeInit(char X, uint32_t Pin_Number) {
 
-void HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin)
-{
+	switch (X) {
+		case 'A':
+			GPIOA->MODER &= ~(3 << (2 * Pin_Number)); // Two bit register.
+			GPIOA->OSPEEDR &= ~(3 << (2 * Pin_Number)); // Two bit register.
+			GPIOA->PUPDR &= ~(3 << (2 * Pin_Number)); // Two bit register.
+    		break;
+  		case 'B':
+			GPIOB->MODER &= ~(3 << (2 * Pin_Number)); // Two bit register.
+			GPIOB->OSPEEDR &= ~(3 << (2 * Pin_Number)); // Two bit register.
+			GPIOB->PUPDR &= ~(3 << (2 * Pin_Number)); // Two bit register.
+			// TODO:
+    		break;
+		case 'C': // Currently 
+			GPIOC->MODER &= ~(3 << (2 * Pin_Number)); // Two bit register.
+			GPIOC->OTYPER &= ~(1 << Pin_Number); // One bit register.
+			GPIOC->OSPEEDR &= ~(3 << (2 * Pin_Number)); // Two bit register.
+			GPIOC->PUPDR &= ~(3 << (2 * Pin_Number)); // Two bit register.
+			GPIOC->ODR &= ~(1 << Pin_Number); // One bit register.
+    		break;
+		case 'D':
+			// TODO: Implement this if you ever want to set registers in GPIOD to zero.
+    		break;
+		case 'E':
+			// TODO: Implement this if you ever want to set registers in GPIOE to zero.
+    		break;
+		case 'F':
+			// TODO: Implement this if you ever want to set registers in GPIOF to zero.
+    		break;
+  		default:
+	}
 }
 
 /*
-GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
-{
-    return -1;
-}
+	Specify a Pin number and Peripheral. This function will return the current state of its Output Data Register.
 */
+GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) { 
+    return -1; // TODO: I don't really see a use for this. Maybe I won't implement it. Maybe I will use it for assert statements. 
+}
 
 void HAL_GPIO_WritePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState) {
+
+// TODO: make this function a switch statement
+
     // 5: Initialize PC6 (blue) high (1) and PC7 (red) to low (0) => set it to 10.
 
 	// Step one: clear xx..00..xx

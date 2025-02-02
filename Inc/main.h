@@ -4,10 +4,7 @@
 
 /*
 Idealy, I could just do 
-
 #define assert(expr) ((expr) ? 0 : assert_failed())
-
-
 but the assert_failed() method isn't triggered when expressions are false. Instead the program just freezes.
 */
 void assert_failed(uint8_t* file, uint32_t line);
@@ -20,9 +17,11 @@ void assert_failed(uint8_t* file, uint32_t line);
 
 // Declare the main functions of each lab.
 int lab1_main(void);
+void Checkoff_1_2(void);
+void Checkoff_1_3(void);
 
-// Functionality we added
-void HAL_RCC_GPIOX_CLK_Enable(char X); // Enables GPIOs specified by a character.
+// Functionality in the self-implemented HAL
+void HAL_RCC_GPIOX_CLK_Enable(char GPIOx);
 
 // Other system stuff you need.
 void SystemClock_Config(void);

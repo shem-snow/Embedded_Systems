@@ -1,3 +1,5 @@
+TARGET ?= LAB2
+
 PREFIX = arm-none-eabi-
 CC = $(PREFIX)gcc
 AS = $(PREFIX)gcc -x assembler-with-cpp
@@ -7,11 +9,6 @@ SZ = $(PREFIX)size
 HEX = $(CP) -O ihex
 BIN = $(CP) -O binary -S
 ST_FLASH = st-flash
-
-######################################
-# target
-######################################
-TARGET = Lab
 
 ######################################
 # building variables
@@ -51,8 +48,7 @@ Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr.c \
 Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr_ex.c \
 Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_flash.c \
 Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_flash_ex.c \
-Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_exti.c \
-# Src/lab1.c  # TODO: lab1 code. This line is not needed because $(wildcard Src/*.c) already includes all .c files in Src/. 
+Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_exti.c
 
 # ASM sources
 ASM_SOURCES =  \
@@ -81,7 +77,7 @@ AS_DEFS =
 C_DEFS =  \
 -DUSE_HAL_DRIVER \
 -DSTM32F072xB \
--DLAB1 # Define Lab 1
+-D${TARGET}
 
 
 # AS includes
@@ -122,8 +118,8 @@ LIBS = -lc -lm -lnosys
 LIBDIR =
 LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS)
 
-program: $(BUILD_DIR)/$(TARGET).bin
-	$(ST_FLASH) --reset --flash=128k --connect-under-reset write $< 0x8000000 
+flash: $(BUILD_DIR)/$(TARGET).bin
+	$(ST_FLASH) --reset --flash=128k --connect-under-reset write $< 0x8000000
 
 #######################################
 # build the application

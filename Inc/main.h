@@ -17,11 +17,12 @@ void assert_failed(uint8_t* file, uint32_t line);
 
 // Declare the main functions of each lab.
 int lab1_main(void);
-void Checkoff_1_2(void);
-void Checkoff_1_3(void);
+int lab2_main(void);
 
-// Functionality in the self-implemented HAL
+// Functionality in the self-implemented HAL that is not already defined in the actual HAL.
 void HAL_RCC_GPIOX_CLK_Enable(char GPIOx);
+
+void Reset_Interrupt(char pin);
 
 // Other system stuff you need.
 void SystemClock_Config(void);

@@ -70,9 +70,20 @@ void PendSV_Handler(void)
   * @param  None
   * @retval None
   */
-void SysTick_Handler(void)
-{
-    HAL_IncTick();
+void SysTick_Handler(void) {
+  
+  HAL_IncTick();
+
+  // This accumulating variable can be either local-static or global-volatile. Both will work.
+  static int SysTick_accumulator;
+
+  // Toggle the blue LED every 200 ms
+  if(SysTick_accumulator >= 200) {
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7);
+	  SysTick_accumulator = 0;
+  }
+  else
+	  SysTick_accumulator += 1;
 }
 
 /******************************************************************************/

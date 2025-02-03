@@ -74,63 +74,59 @@ void HAL_RCC_GPIOX_CLK_Enable(char GPIOx) {
 		case 'F':
 			RCC->AHBENR |= RCC_AHBENR_GPIOFEN;
     		break;
+		case 'I': // Interrupt
+			// TODO: I need to pass in a pin number if I'm going to implement interrupts here. Currently I just have another method for reseting them.
+    		break;
+		case 'S': // SYSCFG
+			RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;
+			RCC->APB2RSTR |= RCC_APB2ENR_SYSCFGCOMPEN;
+    		break;
   		default:
 	}
 }
 
 /*
-Enable the SYSCFG clock.
-*/
-void HAL_RCC_SYSCFG_CLK_Enable()
-{
-    RCC -> APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;
-    RCC -> APB2RSTR |= RCC_APB2ENR_SYSCFGCOMPEN;
-}
-
-/*
 Initialize the GPIO peripheral's pin according to the type def.
 */
-void HAL_GPIO_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef *GPIO_Init)
-{
+void HAL_GPIO_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef *GPIO_Init) {
     // Find the pin number according to the struct's pin.
     uint16_t pinNumber;
-    for (pinNumber = 0; pinNumber < 16; pinNumber++) {
-        if (GPIO_Init -> Pin == (1U << pinNumber)) {
+    for(pinNumber = 0; pinNumber < 16; pinNumber++) {
+        if (GPIO_Init->Pin == (1U << pinNumber)) {
             break;
         }
     }
 
     // Reset GPIOx location.
-    GPIOx -> MODER   &= ~(3 << (2 * pinNumber));
-    GPIOx -> OTYPER  &= ~(1 << (pinNumber));
-    GPIOx -> OSPEEDR &= ~(3 << (2 * pinNumber));
-    GPIOx -> PUPDR   &= ~(3 << (2 * pinNumber));
+    GPIOx->MODER   &= ~(3 << (2 * pinNumber));
+    GPIOx->OTYPER  &= ~(1 << (pinNumber));
+    GPIOx->OSPEEDR &= ~(3 << (2 * pinNumber));
+    GPIOx->PUPDR   &= ~(3 << (2 * pinNumber));
     
     // Active the pin according to how the struct is set up.
-    GPIOx -> MODER   |= (GPIO_Init -> Mode) << (2 * pinNumber);
-    GPIOx -> OTYPER  |= (GPIO_Init -> Alternate) << (pinNumber);
-    GPIOx -> OSPEEDR |= (GPIO_Init -> Speed) << (2 * pinNumber);
-    GPIOx -> PUPDR   |= (GPIO_Init -> Pull) << (2 * pinNumber);
+    GPIOx->MODER   |= (GPIO_Init->Mode) << (2 * pinNumber);
+    GPIOx->OTYPER  |= (GPIO_Init->Alternate) << (pinNumber);
+    GPIOx->OSPEEDR |= (GPIO_Init->Speed) << (2 * pinNumber);
+    GPIOx->PUPDR   |= (GPIO_Init->Pull) << (2 * pinNumber);
 }
 
 /*
-De-Initialize the pin specified.
+	Set bits to zero in the specified pin.
 */
-void HAL_GPIO_DeInit(GPIO_TypeDef* GPIOx, uint32_t GPIO_Pin)
-{
+void HAL_GPIO_DeInit(GPIO_TypeDef* GPIOx, uint32_t GPIO_Pin) {
     // Find the pin number according to the struct's pin.
     uint16_t pinNumber;
-    for (pinNumber = 0; pinNumber < 16; pinNumber++) {
+    for(pinNumber = 0; pinNumber < 16; pinNumber++) {
         if (GPIO_Pin == (1U << pinNumber)) {
             break;
         }
     }
 
     // Clear the bits at GPIOx location.
-    GPIOx -> MODER   &= ~(3 << (2 * pinNumber));
-    GPIOx -> OTYPER  &= ~(1 << (pinNumber));
-    GPIOx -> OSPEEDR &= ~(3 << (2 * pinNumber));
-    GPIOx -> PUPDR   &= ~(3 << (2 * pinNumber));
+    GPIOx->MODER   &= ~(3 << (2 * pinNumber));
+    GPIOx->OTYPER  &= ~(1 << (pinNumber));
+    GPIOx->OSPEEDR &= ~(3 << (2 * pinNumber));
+    GPIOx->PUPDR   &= ~(3 << (2 * pinNumber));
 }
 
 /*
@@ -138,42 +134,73 @@ void HAL_GPIO_DeInit(GPIO_TypeDef* GPIOx, uint32_t GPIO_Pin)
 	Return 1 if it is otherwise return 0.
 */
 GPIO_PinState GPIO_ReadPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) { 
-    return (GPIOx -> IDR) &= GPIO_Pin; 
+    return (GPIOx->IDR) &= GPIO_Pin; 
 }
 
 /*
 Turn on or off the pin that is specified.
 */
-void HAL_GPIO_WritePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState)
-{
+void HAL_GPIO_WritePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState) {
     // Write the pins to be active or deactive.
-    GPIOx -> ODR |= (PinState ? ~0 : 0) & GPIO_Pin;
-} // TODO: you can select which GPIO peripheral to use.
+    GPIOx->ODR |= (PinState ? ~0 : 0) & GPIO_Pin;
+} 
 
 /*
 	Toggle the pin that is specified.
 */
-void HAL_GPIO_TogglePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
-{
+void HAL_GPIO_TogglePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) {
     // Flip the value of the current pin.
-    GPIOx -> ODR ^= GPIO_Pin;
+    GPIOx->ODR ^= GPIO_Pin;
 }
 
-/*
-Setup the EXTI to connect to pin 0 as an interupt.
-*/
-void EXTI_Pin0_Init()
-{
-    EXTI -> IMR  |= EXTI_IMR_MR0; // Make pin 0 the trigger
-    EXTI -> FTSR &= ~EXTI_FTSR_TR0; // Disable falling edge trigger
-    EXTI -> RTSR |= EXTI_RTSR_TR0; // Enable rising edge trigger
-}
 
 /*
-Setup the EXTI1 to connect PA0 to an interupt.
-*/
-void EXTI1_To_A0_Init()
-{
-    SYSCFG -> EXTICR[0] &= ~SYSCFG_EXTICR1_EXTI0; // Clear the bits for EXTI0
-    SYSCFG -> EXTICR[0] |= SYSCFG_EXTICR1_EXTI0_PA; // Set PA0 to route to EXTI0
+ * The process for setting external interrupts is:
+ * 	1: set the bit in the EXTI_IMR register that corresponding to the interrupt you want to trigger.
+ * 	2: Set the corresponding bit in the EXTI_RTSR register to make the interrupt trigger on the rising edge
+ * 		or set it in the EXTI_FTSR to make the interrupt trigger on the falling edge.
+ * 	3: Configure the NVIC to select the specific external interrupt.
+ */
+void Reset_Interrupt(char pin) {
+	switch(pin) {
+		case 'A':
+			// Set the Interrupt Mask Register (IMR) to enable external interrupts (instructions on page 219 in the peripheral manual and example code on page 947)
+			EXTI->IMR  |= EXTI_IMR_MR0; // |= 1
+
+			// For the same bit position, also set the "Rising Trigger Selection Register" (RTSR) or the "Falling Trigger Selection Register (FTSR) to specify the interrupt activates on the rising or falling edge of the signal.
+			EXTI -> RTSR |= EXTI_RTSR_TR0; // Rising edge
+			EXTI -> FTSR &= ~EXTI_FTSR_TR0; // Falling edge
+
+			// Enabling the clock for the SYSCFG peripheral (done in an earlier step) is not enough to trigger an interrupt. We must also reset the peripheral with the "APB peripheral reset register 2" (RCC_APB2RSTR) (peripheral manual page 117).
+			RCC->APB2RSTR |= RCC_APB2RSTR_SYSCFGRST; // |= 1;
+
+			// Configure the bottom three bits in the external interrupt configuration register 1 (SYSCFG1) to 'multiplex' which pin should trigger interrupts on EXTI0 (pages 169 and 170).
+			SYSCFG -> EXTICR[0] &= ~SYSCFG_EXTICR1_EXTI0; // Clear the bits to select the push-button.
+			SYSCFG -> EXTICR[0] |= SYSCFG_EXTICR1_EXTI0_PA; // Set PA0 to route to EXTI0
+
+			// assert(EXTI -> IMR  == 1);
+			// assert(EXTI -> FTSR == 0);
+			// assert(EXTI -> RTSR == 1);
+			// assert(SYSCFG -> EXTICR[0] == 0);
+
+			// Configure the NVIC to select the external interrupt.
+			NVIC_EnableIRQ(EXTI0_1_IRQn); // Enable Interrupt on EXTIO_1 (line 81 in the stm32...xb.h file)
+			break;
+		case 'B':
+			// TODO:
+			break;
+		case 'C':
+			// TODO:
+			break;
+		case 'D':
+			// TODO:
+			break;
+		case 'E':
+			// TODO:
+			break;
+		case 'F':
+			// TODO:
+			break;
+		default:
+	}
 }

@@ -2,6 +2,10 @@
 #include <main.h>
 #include <assert.h>
 
+// Local Prototypes
+void Checkoff_1_2(void);
+void Checkoff_1_3(void);
+
 int lab1_main(void) {
     HAL_Init(); // Reset of all peripherals, init the Flash and Systick
     SystemClock_Config(); // Configure the system clock
@@ -90,6 +94,8 @@ void Checkoff_1_3() {
 }
 
 /*
+    Way to do it with the HAL:
+
         if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)) { // If input signal is set/high
             debouncerCounter |= 0x01; // Set lowest bit of bit-vector
         }

@@ -25,8 +25,8 @@ int lab1_main(void) {
     HAL_Init(); // Reset of all peripherals, init the Flash and Systick
     SystemClock_Config(); // Configure the system clock
     
-    HAL_RCC_GPIOX_CLK_Enable('A'); // Enable the GPIOC clock in the RCC
-    HAL_RCC_GPIOX_CLK_Enable('C'); // Enable the GPIOA clock in the RCC
+    HAL_RCC_CLK_Enable('A', 0); // Enable the GPIOC clock in the RCC
+    HAL_RCC_CLK_Enable('C', 0); // Enable the GPIOA clock in the RCC
     
     // Set up a configuration struct to pass to the initialization function
     GPIO_InitTypeDef initStrC6 = {GPIO_PIN_6,

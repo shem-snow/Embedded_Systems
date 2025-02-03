@@ -91,9 +91,9 @@ void Checkoff_2_2(void) {
 void Register_Setup(void) {
 
     // Enable the clocks for each peripheral of interest..
-    HAL_RCC_GPIOX_CLK_Enable('C'); // GPIOC for LEDs
-    HAL_RCC_GPIOX_CLK_Enable('A'); // GPIOA for the push-button
-    HAL_RCC_GPIOX_CLK_Enable('S'); // SYSCFG for selecting external interrupts.
+    HAL_RCC_CLK_Enable('C', 0); // GPIOC for LEDs
+    HAL_RCC_CLK_Enable('A', 0); // GPIOA for the push-button
+    HAL_RCC_CLK_Enable('S', 0); // SYSCFG for selecting external interrupts.
 
     // Set up a configuration struct to pass to the initialization function
     GPIO_InitTypeDef init_PC6 = {GPIO_PIN_6,

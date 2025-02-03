@@ -21,6 +21,9 @@
 #include <stm32f0xx_hal.h>
 #include <stm32f0xx_it.h>
 
+// Local prototypes
+void Lab2_SysTick_Handler(void);
+
 /******************************************************************************/
 /*            Cortex-M0 Processor Exceptions Handlers                         */
 /******************************************************************************/
@@ -71,6 +74,14 @@ void PendSV_Handler(void)
   * @retval None
   */
 void SysTick_Handler(void) {
+  
+  //HAL_IncTick();
+  Lab2_SysTick_Handler();
+
+
+}
+
+void Lab2_SysTick_Handler(void) {
   
   HAL_IncTick();
 

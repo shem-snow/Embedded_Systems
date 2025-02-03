@@ -56,33 +56,53 @@
 #include <stm32f0xx_hal.h>
 #include <stm32f0xx_hal_gpio.h>
 
-void HAL_RCC_GPIOX_CLK_Enable(char GPIOx) {
+// Local prototypes that will not be used by other C files.
+int Get_GPIO_Pin_Number(GPIO_InitTypeDef *GPIO_Init);
+
+/*
+	This would have been more readable if I passed in a string instead of the two parameters... Eh.
+
+	For now:
+	@param char GPIOx - Pass in a character identifier. GPIOs are A-F.
+	@param uint32_t number - Second identifier.
+*/
+void HAL_RCC_CLK_Enable(char GPIOx, uint32_t number) {
 	switch (GPIOx) {
-		case 'A':
+		case 'A': // GPIOA
 			RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
     		break;
-  		case 'B':
+  		case 'B': // GPIOB
 			RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
     		break;
-		case 'C':
+		case 'C': // GPIOC
 			RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
     		break;
-		case 'D':
+		case 'D': // GPIOD
 			RCC->AHBENR |= RCC_AHBENR_GPIODEN;
     		break;
-		case 'E':
+		case 'E': // GPIOE
 			RCC->AHBENR |= RCC_AHBENR_GPIOEEN;
     		break;
-		case 'F':
+		case 'F': // GPIOF
 			RCC->AHBENR |= RCC_AHBENR_GPIOFEN;
     		break;
-		case 'I': // Interrupt
-			// TODO: I need to pass in a pin number if I'm going to implement interrupts here. Currently I just have another method for reseting them.
-    		break;
+		case 'I': // Interrupts
+			// TODO: At some point when I want to use the NVIC for more interrupts than just the button, I'll need to create this.
+			// For now, I'll just enable the clocks manually as I need to.
+			break;
 		case 'S': // SYSCFG
 			RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;
 			RCC->APB2RSTR |= RCC_APB2ENR_SYSCFGCOMPEN;
     		break;
+		case 'T': // Timers
+			if(number == 1)
+				; // TODO: Timer 1
+			else if(number == 2)
+				RCC->APB1ENR |=  RCC_APB1ENR_TIM2EN; // Timer 2
+			else if(number == 3) 
+				RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; // Timer 3
+			break;
+			// TODO: else??
   		default:
 	}
 }
@@ -92,24 +112,47 @@ Initialize the GPIO peripheral's pin according to the type def.
 */
 void HAL_GPIO_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef *GPIO_Init) {
     // Find the pin number according to the struct's pin.
-    uint16_t pinNumber;
-    for(pinNumber = 0; pinNumber < 16; pinNumber++) {
-        if (GPIO_Init->Pin == (1U << pinNumber)) {
-            break;
-        }
-    }
+	uint16_t pinNumber = Get_GPIO_Pin_Number(GPIO_Init);
+    
 
     // Reset GPIOx location.
     GPIOx->MODER   &= ~(3 << (2 * pinNumber));
     GPIOx->OTYPER  &= ~(1 << (pinNumber));
     GPIOx->OSPEEDR &= ~(3 << (2 * pinNumber));
     GPIOx->PUPDR   &= ~(3 << (2 * pinNumber));
+	GPIOx->AFR[0]  &= 0;
+	GPIOx->AFR[1]  &= 0;
     
     // Active the pin according to how the struct is set up.
     GPIOx->MODER   |= (GPIO_Init->Mode) << (2 * pinNumber);
-    GPIOx->OTYPER  |= (GPIO_Init->Alternate) << (pinNumber);
-    GPIOx->OSPEEDR |= (GPIO_Init->Speed) << (2 * pinNumber);
+    GPIOx->OTYPER  |= (0 << pinNumber); // The pre-defined struct doesn't define push-pull (0) or open-drain (1) modes. But there is an option to specify them (lines 116 and 117 in the HAL). I default to push-pull here.
+	GPIOx->OSPEEDR |= (GPIO_Init->Speed) << (2 * pinNumber);
     GPIOx->PUPDR   |= (GPIO_Init->Pull) << (2 * pinNumber);
+}
+
+/*
+	Configures a specified Pin to the specified Alternate Function mode.
+	The "AFR_high" parameter works as a Boolean to identify if the high or low Alternate Function register will be edited.
+*/
+void HAL_ALTERNATE_PIN_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef *GPIO_Init, uint8_t AFR_high) {
+	// Assign the alternate function.
+	if(AFR_high)
+		GPIOx->AFR[1]  |= (GPIO_Init->Alternate);
+	else {
+		GPIOx->AFR[0]  |= (GPIO_Init->Alternate);
+	}
+		
+}
+
+int Get_GPIO_Pin_Number(GPIO_InitTypeDef *GPIO_Init){
+	uint16_t pinNumber;
+	for(pinNumber = 0; pinNumber < 16; pinNumber++) {
+        if (GPIO_Init->Pin == (1U << pinNumber)) {
+            return pinNumber;
+        }
+    }
+
+	return -1;
 }
 
 /*
@@ -174,7 +217,7 @@ void Reset_Interrupt(char pin) {
 			EXTI -> FTSR &= ~EXTI_FTSR_TR0; // Falling edge
 
 			// Enabling the clock for the SYSCFG peripheral (done in an earlier step) is not enough to trigger an interrupt. We must also reset the peripheral with the "APB peripheral reset register 2" (RCC_APB2RSTR) (peripheral manual page 117).
-			RCC->APB2RSTR |= RCC_APB2RSTR_SYSCFGRST; // |= 1;
+			RCC->APB2RSTR |= RCC_APB2RSTR_SYSCFGRST;
 
 			// Configure the bottom three bits in the external interrupt configuration register 1 (SYSCFG1) to 'multiplex' which pin should trigger interrupts on EXTI0 (pages 169 and 170).
 			SYSCFG -> EXTICR[0] &= ~SYSCFG_EXTICR1_EXTI0; // Clear the bits to select the push-button.

@@ -1,18 +1,22 @@
 /*
-	Files that will be useful to understanding the repository are:
-		- stm32f072xb.h: Defines data types 
-			for example, GPIO_TypeDef is a struct with all the registers in a GPIO peripheral (on line 382).
+	There are two strategies to write code for our board. First is to look in the datasheet and directly edit register values which 
+	are memory-mapped to peripheral controls.
 	
-	If you're ever unsure of a data type or what values to assign it, you can most likely find that information in the files:
-			./Drivers/STM32F0xx_HAL_Driver/<"Inc" for header files or "Src" for source files>/stm32f0xx_hal_xxxx.<c or h>
+	Second is to look in this file:
+		./Drivers/STM32F0xx_HAL_Driver/<"Inc" for header files or "Src" for source files>/stm32f0xx_hal_xxxx.<c or h>
 			where "xxxx" is whatever peripheral uses the data type you're wondering about.
-		A common one is GPIO_PinState which can be GPIO_PIN_RESET or GPIO_PIN_SET.
-	
-	A common function parameter used here is "GPIO_InitTypeDef *" which is a pointer to a struct intended to hold items which are
-	just integers that encode each value/setting for peripheral registers. The intention is that you decide all the settings you
-	want to configure a pin with. Put those settings in said struct. then pass the struct into the function which configures the pin.
+		and focus on the peripheral registers you want to edit.ADC1_2_EXTERNALTRIG_T1_CC4
 
-	Definitions because I keep forgetting:
+	The file:
+		- stm32f072xb.h: Defines data types 
+		contains all the pre-defined values that you might set to the registers in the device header file first mentioned.
+	
+	
+	An additional thing to note: A common function parameter used here is "GPIO_InitTypeDef *" which is a pointer to a struct intended to hole
+	items which are just integers that encode each value/setting for peripheral registers. The intention is that you decide all the settings.
+	you want to configure a pin with. Put those settings in said struct. then pass the struct into the function which configures the pin.
+
+	Definitions I keep forgetting so I left them here for easy reference:
 
 		LED Mappings:
 		uint32_t RED = 1 << 6;
@@ -46,8 +50,6 @@
   		GPIO_PIN_RESET = 0U,
   		GPIO_PIN_SET
 		}GPIO_PinState;
-
-	Even though it would be better to create masks then call these funcitons, the class still decided to edit only one pin at a time.
 
 */
 #include <stdint.h>

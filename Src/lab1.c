@@ -16,6 +16,7 @@
 #include <stm32f0xx_hal.h>
 #include <main.h>
 #include <assert.h>
+#include "My_HAL.h"
 
 // Local Prototypes
 void Checkoff_1_2(void);
@@ -54,7 +55,7 @@ int lab1_main(void) {
 
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET); // Start PC6 high
     // assert(GPIOC->ODR == 0x00000100);
-
+    
     // Checkoff_1_2();
     Checkoff_1_3();
 

@@ -55,6 +55,8 @@
 #include <stdint.h>
 #include <stm32f0xx_hal.h>
 #include <stm32f0xx_hal_gpio.h>
+#include "My_HAL.h"
+
 
 // Local prototypes that will not be used by other C files.
 int Get_GPIO_Pin_Number(GPIO_InitTypeDef *GPIO_Init);
@@ -110,6 +112,25 @@ void HAL_RCC_CLK_Enable(char GPIOx, uint32_t number) {
 /*
 Initialize the GPIO peripheral's pin according to the type def.
 */
+void My_HAL_GPIO_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init) {
+	
+    // Reset GPIOx location.
+    GPIOx->MODER   &= ~(3 << (2 * (GPIO_Init->PinNumber)));
+    GPIOx->OTYPER  &= ~(1 << (1 * (GPIO_Init->PinNumber)));
+    GPIOx->OSPEEDR &= ~(3 << (2 * (GPIO_Init->PinNumber)));
+    GPIOx->PUPDR   &= ~(3 << (2 * (GPIO_Init->PinNumber)));
+	GPIOx->AFR[0]  &= 0;
+	GPIOx->AFR[1]  &= 0;
+    
+    // Activate the pin according to how the struct is set up.
+    GPIOx->MODER   |= (GPIO_Init->Mode) << (2 * (GPIO_Init->PinNumber));
+    GPIOx->OTYPER  |= (GPIO_Init->Otype) << (1 * (GPIO_Init->PinNumber));
+	GPIOx->OSPEEDR |= (GPIO_Init->Speed) << (2 * (GPIO_Init->PinNumber));
+    GPIOx->PUPDR   |= (GPIO_Init->Pull) << (2 * (GPIO_Init->PinNumber));
+}
+/*
+	Labs 1 and 2 still use the provided version so I'll leave it here for them.
+*/
 void HAL_GPIO_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef *GPIO_Init) {
     // Find the pin number according to the struct's pin.
 	uint16_t pinNumber = Get_GPIO_Pin_Number(GPIO_Init);
@@ -132,16 +153,19 @@ void HAL_GPIO_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef *GPIO_Init) {
 
 /*
 	Configures a specified Pin to the specified Alternate Function mode.
-	The "AFR_high" parameter works as a Boolean to identify if the high or low Alternate Function register will be edited.
+	The "AFR_high_or_low" parameter accounts for there being more than one Alternate Function register.
+	
+	Note that THERE ARE ONLY TWO!! Therefore setting AFR_high_or_low to anything other than 0 or 1 would 
+	map to an unintentional place.
 */
-void HAL_ALTERNATE_PIN_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef *GPIO_Init, uint8_t AFR_high) {
-	// Assign the alternate function.
-	if(AFR_high)
-		GPIOx->AFR[1]  |= (GPIO_Init->Alternate);
+void HAL_ALTERNATE_PIN_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init, uint8_t AFR_high_or_low) {
+	if(AFR_high_or_low != 0 && AFR_high_or_low != 1)
+		return; // Just don't do that.
 	else {
-		GPIOx->AFR[0]  |= (GPIO_Init->Alternate);
+		// Assign the alternate function.
+		GPIOx->AFR[AFR_high_or_low] &= ~(15); // Clear the current bits
+		GPIOx->AFR[AFR_high_or_low] |= (GPIO_Init->AlternateFunction); // Set the new bits
 	}
-		
 }
 
 int Get_GPIO_Pin_Number(GPIO_InitTypeDef *GPIO_Init){
@@ -183,7 +207,8 @@ GPIO_PinState GPIO_ReadPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) {
 }
 
 /*
-Turn on or off the pin that is specified.
+	Turn on or off the pin that is specified.
+	State is either GPIO_PIN_SET (1) or GPIO_PIN_RESET (0)
 */
 void HAL_GPIO_WritePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState) {
     // Write the pins to be active or deactive.

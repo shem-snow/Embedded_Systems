@@ -74,11 +74,7 @@ void PendSV_Handler(void)
   * @retval None
   */
 void SysTick_Handler(void) {
-  
-  //HAL_IncTick();
-  Lab2_SysTick_Handler();
-
-
+  HAL_IncTick();
 }
 
 void Lab2_SysTick_Handler(void) {

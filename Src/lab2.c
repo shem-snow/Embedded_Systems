@@ -20,6 +20,7 @@
 #include <stm32f0xx_hal.h>
 #include <main.h>
 #include <assert.h>
+#include "My_HAL.h"
 
 // Local prototypes
 void Register_Setup(void);

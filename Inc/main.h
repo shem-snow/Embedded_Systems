@@ -15,11 +15,6 @@ void assert_failed(uint8_t* file, uint32_t line);
         } \
     } while (0)
 
-// Functionality I added to the HAL that will be used by other C files.
-void HAL_RCC_CLK_Enable(char GPIOx, uint32_t number);
-void Reset_Interrupt(char pin);
-void HAL_ALTERNATE_PIN_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef *GPIO_Init, uint8_t AFR_high);
-
 // Declare the main functions of each lab.
 int lab1_main(void);
 int lab2_main(void);
@@ -29,5 +24,5 @@ int lab5_main(void);
 int lab6_main(void);
 int lab7_main(void);
 
-// Other system stuff you need.
+// System_Setup stuff you need.
 void SystemClock_Config(void);

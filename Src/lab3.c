@@ -150,7 +150,7 @@ void Timer2_Setup(void) {
 	TIM2->DIER |= 1;
 
 	// Start timer 2 but only after all of its settings are configured.
-	TIM2->CR1 |= 1; //TIM_CR1_ARPE | TIM_CR1_CEN; //1; TODO:
+	TIM2->CR1 |= 1; // TIM_CR1_ARPE | TIM_CR1_CEN; //1; TODO:
 }
 
 /*

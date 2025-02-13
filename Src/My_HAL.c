@@ -104,6 +104,9 @@ void HAL_RCC_CLK_Enable(char GPIOx, uint32_t number) {
 			else if(number == 3) 
 				RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; // Timer 3
 			break;
+		case 'U': // USART3
+			// TODO: I could use the second (integer) parameter to specify USART other than 3
+			RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
 			// TODO: else??
   		default:
 	}
@@ -159,12 +162,14 @@ void HAL_GPIO_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef *GPIO_Init) {
 	map to an unintentional place.
 */
 void HAL_ALTERNATE_PIN_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init, uint8_t AFR_high_or_low) {
+	
+	
 	if(AFR_high_or_low != 0 && AFR_high_or_low != 1)
 		return; // Just don't do that.
 	else {
 		// Assign the alternate function.
-		GPIOx->AFR[AFR_high_or_low] &= ~(15); // Clear the current bits
-		GPIOx->AFR[AFR_high_or_low] |= (GPIO_Init->AlternateFunction); // Set the new bits
+		GPIOx->AFR[AFR_high_or_low] &= ~(15 << (4*(GPIO_Init->PinNumber))); // Clear the current bits
+		GPIOx->AFR[AFR_high_or_low] |= ((GPIO_Init->AlternateFunction) << (4*(GPIO_Init->PinNumber))); // Set the new bits
 	}
 }
 
@@ -175,7 +180,6 @@ int Get_GPIO_Pin_Number(GPIO_InitTypeDef *GPIO_Init){
             return pinNumber;
         }
     }
-
 	return -1;
 }
 
@@ -184,8 +188,9 @@ int Get_GPIO_Pin_Number(GPIO_InitTypeDef *GPIO_Init){
 */
 void HAL_GPIO_DeInit(GPIO_TypeDef* GPIOx, uint32_t GPIO_Pin) {
     // Find the pin number according to the struct's pin.
-    uint16_t pinNumber;
-    for(pinNumber = 0; pinNumber < 16; pinNumber++) {
+
+	uint16_t pinNumber;
+	for(pinNumber = 0; pinNumber < 16; pinNumber++) {
         if (GPIO_Pin == (1U << pinNumber)) {
             break;
         }

@@ -175,7 +175,7 @@ void Timer3_Setup(void) {
 
 	// Channel 1, which controls the RED LED, uses PWM mode 2 (111).
 	// Therefore setting the CCR1 to 0 makes it brightest, 20 is dimmest, and 21+ is off.
-	TIM3->CCR1 = 15; // This has to be down-counting??
+	TIM3->CCR1 = 19; // This has to be down-counting??
 
 	// And channel 2, Which controls the BLUE LED, uses PWM mode 1 (110).
 	// Therefore 0 is off and increasing up to 20 increases brightness. Having a duty cycle > 100% doesn't make it any brighter.
@@ -224,8 +224,8 @@ void Timer3_Setup(void) {
 void TIM2_IRQHandler(void) {
 
 	// Toggle between the green (PC8) and orange (PC9) LEDs
-	GPIOC->ODR ^= (1<<8);
-	GPIOC->ODR ^= (1<<9);
+	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8);
+	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_9);
 
 	// Clear the pending flag for the interrupt status register
 	TIM2->SR &= ~1; // "Set" (turned to 1) by event. "Cleared" (turned to 0) by software (right here!).

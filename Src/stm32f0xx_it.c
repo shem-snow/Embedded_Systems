@@ -78,7 +78,7 @@ void SysTick_Handler(void) {
     Lab2_SysTick_Handler();
   #else
     HAL_IncTick();
-    #endif
+  #endif
 }
 
 void Lab2_SysTick_Handler(void) {

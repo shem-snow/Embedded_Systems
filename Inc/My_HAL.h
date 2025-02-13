@@ -56,3 +56,14 @@ void HAL_RCC_CLK_Enable(char GPIOx, uint32_t number);
 void Reset_Interrupt(char pin);
 void HAL_ALTERNATE_PIN_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init, uint8_t AFR_high);
 void My_HAL_GPIO_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init);
+
+
+
+// ________________________________________ UART _________________________________________
+void Transmit_Char(char c);
+void Transmit_String(char* str);
+void Process_TDR_Part_I(char c);
+void Process_TDR_Part_II(char LED, char action_ID);
+
+void Init_USART3(void);
+void Init_LEDs(void);

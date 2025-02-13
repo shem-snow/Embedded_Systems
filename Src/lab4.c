@@ -23,10 +23,9 @@
 
 
 /* Local prototypes -----------------------------------------------*/
-void Transmit_Char(char c);
-void Transmit_String(char* str);
-void Process_TDR_Part_I(char c);
-void Process_TDR_Part_II(char LED, char action_ID);
+
+void Checkoff_4_1(void);
+void Checkoff_4_2(void);
 
 // Separations of concern.
 void Init_USART3(void);
@@ -36,6 +35,9 @@ void Init_LEDs(void);
 volatile char received_byte;
 volatile uint8_t message_received_flag;
 
+char LED_ID;
+char action_ID;
+
 
 /**
   * @brief  The application entry point.
@@ -43,8 +45,8 @@ volatile uint8_t message_received_flag;
   */
 int lab4_main(void) {
 	// Initializations and Instantiations
-  HAL_Init();
-  SystemClock_Config();
+	HAL_Init();
+	SystemClock_Config();
 	message_received_flag = 0;
 	received_byte = '&'; // I initialized it to some junk that would never be processed.
 	
@@ -52,24 +54,34 @@ int lab4_main(void) {
 	Init_LEDs();
 	Init_USART3();
 	
-	// Instantiate a null-terminated array to hold incoming messages.
-	char LED_ID;
-	char action_ID;
-  while (1) {
-		
-		// Test your transmission methods
-		// Transmit_String("Jeffery Epstein didn't kill himself.");
-		
-		// Part I check-off
-		
-		// Do nothing while the RECEIVE data register is empty, otherwise handle the (received) data inside it.
-		//if( (USART3->ISR & (1<<5) ) ) {
-		//	Process_TDR_Part_I( USART3->RDR & (0xFF) ); // Bottom 8 bits is the character.
-		//}
-		
-		
-		// Part II check-off
-		
+	//Checkoff_4_1();
+	Checkoff_4_2();
+	
+	return 0;
+}
+
+
+void Checkoff_4_1(void) {
+	while (1) {
+		//Test your transmission methods
+		Transmit_String("Jeffery Epstein didn't kill himself.\n");
+		//Do nothing while the RECEIVE data register is empty, otherwise handle the (received) data inside it.
+		if( (USART3->ISR & (1<<5) ) ) {
+			Process_TDR_Part_I( USART3->RDR & (0xFF) ); // Bottom 8 bits is the character.
+		}
+	  }
+}
+
+/*
+	You put in two characters to cause an action.
+		First character selects one of the LEDs ('r' 'g' 'b' 'o')
+        Second character selects the action to perform on that LED
+			'0' - off
+            '1' - on
+            '2' - toggle
+*/
+void Checkoff_4_2(void) {
+	while(1) {
 		// Display a prompt to the user to get two characters.
 		Transmit_String("\nWhat would you have me do?");
 		
@@ -101,28 +113,57 @@ int lab4_main(void) {
   }
 }
 
-// __________________________________________________________________ Helper methods _______________________________________________
+// ________________________________________________ Helper Functions ____________________________________________
+
 
 void Init_USART3(void) {
 	
 	// Feed the clock into the USART3 peripheral
-	RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
-	
+    HAL_RCC_CLK_Enable('U', 3);
+
+	// In this lab we only want to set the mode and alternate function registers. The others are at default values.
 	// Set the discovery board pins (connected to USART3) to alternate function mode (10)
-	GPIOC->MODER |= 2 << (2*4); // pin 4
+	GPIOC->MODER |= 2 << (2*4); // pin 4 is the USART3 receiver in alternate function mode 1
 	GPIOC->MODER &= ~(1<< (2*4) );
 	
-	GPIOC->MODER |= 2 << (2*5); // pin 5
+	GPIOC->MODER |= 2 << (2*5); // pin 5 is the USART3 transmitter in alternate function mode 1
 	GPIOC->MODER &= ~(1<< (2*5) );
 	
-	// Multiplex to alternate function mode 1 ([3:0] = 0001)
-	GPIOC->AFR[0] &= ~(14 << 4*4); // pin 4
-	GPIOC->AFR[0] |= (1 << 4*4);
+
+	// TODO: If I can find out what the default values are then I'll use the provided HAL. One idea is to not reset bits in MY_HAL functions. That would require constant use of the De-init funciton.
+    My_GPIO_InitTypeDef init_PC4 = { // Receiver
+		4,
+		GPIO_MODE_AF,
+		GPIO_Otype_Open_Drain,
+		GPIO_SPEED_FREQ_HIGH,
+		GPIO_Pull_up,
+		0, // uint32_t InData;
+		0, // uint32_t OutData;
+		0, // uint32_t LCKR;
+		0, // uint32_t PortLock;
+		AF1,
+		0 // uint32_t BitReset;
+	};
+    //My_HAL_GPIO_Init(GPIOC, &init_PC4);
+	HAL_ALTERNATE_PIN_Init(GPIOC, &init_PC4, 0);
+
+    My_GPIO_InitTypeDef init_PC5 = { // Transmitter
+		5,
+		GPIO_MODE_AF,
+		GPIO_Otype_Push_Pull,
+		GPIO_SPEED_FREQ_LOW,
+		GPIO_Pull_none,
+		0, // uint32_t InData;
+		0, // uint32_t OutData;
+		0, // uint32_t LCKR;
+		0, // uint32_t PortLock;
+		AF1,
+		0 // uint32_t BitReset;
+	};
+    //My_HAL_GPIO_Init(GPIOC, &init_PC5);
+	HAL_ALTERNATE_PIN_Init(GPIOC, &init_PC5, 0);
 	
-	GPIOC->AFR[0] &= ~(14 << 4*5); // pin 5
-	GPIOC->AFR[0] |= (1 << 4*5);
-	
-  // Set the Baud rate for communcation to be 115,200 bits/second. The system clock is 8 MHz.
+    // Set the Baud rate for communcation to be 115,200 bits/second. The system clock is 8 MHz.
 	USART3->BRR = HAL_RCC_GetHCLKFreq() / 115200;
 	
 	// Enable USART in the control register.

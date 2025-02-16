@@ -33,7 +33,7 @@ void Init_LEDs(void);
 
 // Global Variables
 volatile char received_byte;
-volatile uint8_t message_received_flag;
+//volatile uint8_t message_received_flag;
 
 char LED_ID;
 char action_ID;
@@ -47,24 +47,25 @@ int lab4_main(void) {
 	// Initializations and Instantiations
 	HAL_Init();
 	SystemClock_Config();
-	message_received_flag = 0;
+	//message_received_flag = 0;
 	received_byte = '&'; // I initialized it to some junk that would never be processed.
 	
 	// Enable all the peripherals we're using.
 	Init_LEDs();
 	Init_USART3();
 	
-	//Checkoff_4_1();
-	Checkoff_4_2();
+	Checkoff_4_1();
+	//Checkoff_4_2();
 	
 	return 0;
 }
 
 
 void Checkoff_4_1(void) {
+	//Test your transmission methods
+	HAL_Delay(1000);
+	Transmit_String("Jeffery Epstein didn't kill himself.\r\n");
 	while (1) {
-		//Test your transmission methods
-		Transmit_String("Jeffery Epstein didn't kill himself.\n");
 		//Do nothing while the RECEIVE data register is empty, otherwise handle the (received) data inside it.
 		if( (USART3->ISR & (1<<5) ) ) {
 			Process_TDR_Part_I( USART3->RDR & (0xFF) ); // Bottom 8 bits is the character.
@@ -83,13 +84,13 @@ void Checkoff_4_1(void) {
 void Checkoff_4_2(void) {
 	while(1) {
 		// Display a prompt to the user to get two characters.
-		Transmit_String("\nWhat would you have me do?");
+		Transmit_String("\r\nWhat would you have me do?");
 		
 		// Receive the first character
 		while( !(USART3->ISR & (1<<5) )) {
 		}
 		received_byte = USART3->RDR & 0xFF;
-		Transmit_String("\nFirst character is "); Transmit_Char(received_byte);
+		Transmit_String("\r\nFirst character is "); Transmit_Char(received_byte);
 		
 		// If it's an accepted letter, save it and receive the second character.
 		if ( received_byte == 'r' || received_byte == 'g' || received_byte == 'b' || received_byte == 'o') {
@@ -99,7 +100,7 @@ void Checkoff_4_2(void) {
 			while( !(USART3->ISR & (1<<5) )) {
 			}
 			received_byte = USART3->RDR & 0xFF;
-			Transmit_String("\nSecond character is "); Transmit_Char(received_byte);
+			Transmit_String("\r\nSecond character is "); Transmit_Char(received_byte);
 			
 			// If it's a number then perform the corresponding action.
 			if(received_byte >= '0' && received_byte <= '2') {
@@ -109,7 +110,7 @@ void Checkoff_4_2(void) {
 			}
 		}
 		// Otherwise the input was invalid. Broadcast an error message and return to the beginning state.
-		Transmit_String("\nThat's is not a valid command, Try again."); // Error message for invalid character
+		Transmit_String("\r\nThat's is not a valid command, Try again."); // Error message for invalid character
   }
 }
 
@@ -186,7 +187,7 @@ void Init_USART3(void) {
 void USART3_4_IRQHandler(void) {
 	if( (USART3->ISR & (1<<5) ) ) {
 		received_byte = USART3->RDR | 0xFF;
-		message_received_flag = 1;
+		// message_received_flag = 1;
 	}
 }
 

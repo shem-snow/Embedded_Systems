@@ -84,23 +84,26 @@ void Checkoff_5_2(void) {
 
 	
 		// If the x position is negative, turn off the orange LED and turn on the green LED. Note that this is opposite of what you see on the board.
-		if (x_total < 0) {
+		// The instructions also said to use a threshold value for more accuracy. I'll try that
+		int neg_thresh = -10;
+		int pos_thresh = 10;
+		if (x_total < neg_thresh) {
 			GPIOC->ODR &= ~ORANGE;
 			GPIOC->ODR |= GREEN;
 		}
 		// Otherwise the x position is positive. Turn on orange and turn off green.
-		else {
+		else if(x_total > pos_thresh) {
 			GPIOC->ODR |= ORANGE;
 			GPIOC->ODR &= ~GREEN;
 		}
 	
 		// If the y position is negative, turn blue off and red on.
-		if (y_total < 0) {
+		if (y_total < neg_thresh) {
 			GPIOC->ODR &= ~BLUE;
 			GPIOC->ODR |= RED;
 		}
 		// Otherwise the y position is positive. Turn on blue and turn off red.
-		else {
+		else if(y_total > pos_thresh) {
 			GPIOC->ODR |= BLUE;
 			GPIOC->ODR &= ~RED;
 		}

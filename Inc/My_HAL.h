@@ -24,6 +24,12 @@
 #define GPIO_Pull_up 0x1
 #define GPIO_Pull_down 0x2
 
+
+#define RED  (1<<6)
+#define BLUE (1<<7)
+#define ORANGE (1<<8)
+#define GREEN (1<<9)
+
 /** 
   * @brief  This struct contains the registers you would use for GPIO pins.
   */
@@ -42,19 +48,19 @@ typedef struct {
 
   uint32_t OutData;
 
-  uint32_t LCKR;
+  uint32_t PortSetReset;
 
   uint32_t PortLock;
 
   uint32_t AlternateFunction;
 
-  uint32_t BitReset;
+  uint32_t PortBitReset;
 
 } My_GPIO_InitTypeDef;
 
 void HAL_RCC_CLK_Enable(char GPIOx, uint32_t number);
 void Reset_Interrupt(char pin);
-void HAL_ALTERNATE_PIN_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init, uint8_t AFR_high);
+void HAL_ALTERNATE_PIN_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init);
 void My_HAL_GPIO_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init);
 
 
@@ -67,3 +73,5 @@ void Process_TDR_Part_II(char LED, char action_ID);
 
 void Init_USART3(void);
 void Init_LEDs(void);
+void Init_I2C2(void);
+void Init_Gyroscope(void);

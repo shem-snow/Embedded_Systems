@@ -74,13 +74,13 @@ void LED_Setup(void) {
 		GPIO_PULLDOWN,
 		0, // uint32_t InData;
 		0, // uint32_t OutData;
-		0, // uint32_t LCKR;
+		0, // uint32_t PortSetReset;
 		0, // uint32_t PortLock;
 		AF0,
 		0 // uint32_t BitReset;
 	};
 	My_HAL_GPIO_Init(GPIOC, &init_PC6);
-	HAL_ALTERNATE_PIN_Init(GPIOC, &init_PC6, 0);
+	HAL_ALTERNATE_PIN_Init(GPIOC, &init_PC6);
 
 	// pin 7 (blue)
 	My_GPIO_InitTypeDef init_PC7 = {
@@ -91,13 +91,13 @@ void LED_Setup(void) {
 		GPIO_PULLDOWN,
 		0, // uint32_t InData;
 		0, // uint32_t OutData;
-		0, // uint32_t LCKR;
+		0, // uint32_t PortSetReset;
 		0, // uint32_t PortLock;
 		AF0,
 		0 // uint32_t BitReset;
 	};
 	My_HAL_GPIO_Init(GPIOC, &init_PC7);
-	HAL_ALTERNATE_PIN_Init(GPIOC, &init_PC7, 0);
+	HAL_ALTERNATE_PIN_Init(GPIOC, &init_PC7);
 
 	// pin 8 (orange)
 	My_GPIO_InitTypeDef init_PC8 = {
@@ -108,7 +108,7 @@ void LED_Setup(void) {
 		GPIO_PULLDOWN,
 		0, // uint32_t InData;
 		0, // uint32_t OutData;
-		0, // uint32_t LCKR;
+		0, // uint32_t PortSetReset;
 		0, // uint32_t PortLock;
 		AF0,
 		0 // uint32_t BitReset;
@@ -124,7 +124,7 @@ void LED_Setup(void) {
 		GPIO_PULLDOWN,
 		0, // uint32_t InData;
 		0, // uint32_t OutData;
-		0, // uint32_t LCKR;
+		0, // uint32_t PortSetReset;
 		0, // uint32_t PortLock;
 		AF0,
 		0 // uint32_t BitReset;

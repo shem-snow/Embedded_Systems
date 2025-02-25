@@ -29,7 +29,6 @@ void Checkoff_4_2(void);
 
 // Separations of concern.
 void Init_USART3(void);
-void Init_LEDs(void);
 
 // Global Variables
 volatile char received_byte;
@@ -54,8 +53,8 @@ int lab4_main(void) {
 	Init_LEDs();
 	Init_USART3();
 	
-	Checkoff_4_1();
-	//Checkoff_4_2();
+	//Checkoff_4_1();
+	Checkoff_4_2();
 	
 	return 0;
 }
@@ -140,13 +139,13 @@ void Init_USART3(void) {
 		GPIO_Pull_up,
 		0, // uint32_t InData;
 		0, // uint32_t OutData;
-		0, // uint32_t LCKR;
+		0, // uint32_t PortSetReset;
 		0, // uint32_t PortLock;
 		AF1,
 		0 // uint32_t BitReset;
 	};
     //My_HAL_GPIO_Init(GPIOC, &init_PC4);
-	HAL_ALTERNATE_PIN_Init(GPIOC, &init_PC4, 0);
+	HAL_ALTERNATE_PIN_Init(GPIOC, &init_PC4);
 
     My_GPIO_InitTypeDef init_PC5 = { // Transmitter
 		5,
@@ -156,13 +155,13 @@ void Init_USART3(void) {
 		GPIO_Pull_none,
 		0, // uint32_t InData;
 		0, // uint32_t OutData;
-		0, // uint32_t LCKR;
+		0, // uint32_t PortSetReset;
 		0, // uint32_t PortLock;
 		AF1,
 		0 // uint32_t BitReset;
 	};
     //My_HAL_GPIO_Init(GPIOC, &init_PC5);
-	HAL_ALTERNATE_PIN_Init(GPIOC, &init_PC5, 0);
+	HAL_ALTERNATE_PIN_Init(GPIOC, &init_PC5);
 	
     // Set the Baud rate for communcation to be 115,200 bits/second. The system clock is 8 MHz.
 	USART3->BRR = HAL_RCC_GetHCLKFreq() / 115200;
@@ -189,50 +188,6 @@ void USART3_4_IRQHandler(void) {
 		received_byte = USART3->RDR | 0xFF;
 		// message_received_flag = 1;
 	}
-}
-
-/*
-* Initializes LEDs PC6-9
-*/
-void Init_LEDs(void) {
-	
-	// Initialize Port C: LEDs and pins
-	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
-	
-	// Set the MODER to output mode (01)
-	GPIOC->MODER &= ~(1<< (2*6 +1) );
-	GPIOC->MODER &= ~(1<< (2*7 +1) );
-	GPIOC->MODER &= ~(1<< (2*8 +1) );
-	GPIOC->MODER &= ~(1<< (2*9 +1) );
-	
-	GPIOC->MODER |= 1 << 2*6;
-	GPIOC->MODER |= 1 << 2*7;
-	GPIOC->MODER |= 1 << 2*8;
-	GPIOC->MODER |= 1 << 2*9;
-	
-	// Set output type register to push-pull (0)
-	GPIOC->OTYPER &= ~(1<<6);
-	GPIOC->OTYPER &= ~(1<<7);
-	GPIOC->OTYPER &= ~(1<<8);
-	GPIOC->OTYPER &= ~(1<<9);
-	
-	// Set output speed register to low speed (x0)
-	GPIOC->OSPEEDR &= ~(1 << 2*6);
-	GPIOC->OSPEEDR &= ~(1 << 2*7);
-	GPIOC->OSPEEDR &= ~(1 << 2*8);
-	GPIOC->OSPEEDR &= ~(1 << 2*9);
-	
-	// Set the pins to no pull-up, pull-down (00)
-	GPIOC->PUPDR &= ~(3<<2*6);
-	GPIOC->PUPDR &= ~(3<<2*7);
-	GPIOC->PUPDR &= ~(3<<2*8);
-	GPIOC->PUPDR &= ~(3<<2*9);
-	
-	// Initialize each light to be on
-	GPIOC->ODR |= 1<<6;
-	GPIOC->ODR |= 1<<7;
-	GPIOC->ODR |= 1<<8;
-	GPIOC->ODR |= 1<<9;
 }
 
 /*
@@ -267,16 +222,16 @@ void Process_TDR_Part_I(char c) {
 		case '\0':
 			break;
 		case 'r':
-			GPIOC->ODR ^= 1 << 6;
+			GPIOC->ODR ^= RED;
 			break;
 		case 'g':
-			GPIOC->ODR ^= 1 << 9;
+			GPIOC->ODR ^= GREEN;
 			break;
 		case 'b':
-			GPIOC->ODR ^= 1 << 7;
+			GPIOC->ODR ^= BLUE;
 			break;
 		case 'o':
-			GPIOC->ODR ^= 1 << 8;
+			GPIOC->ODR ^= ORANGE;
 			break;
 		default:
 			Transmit_String("You're only allowed to type one of the 4 colors. Try again nerd.");
@@ -295,19 +250,19 @@ void Process_TDR_Part_II(char LED_ID, char action_ID) {
 	int ODR_Value;
 	switch(LED_ID) {
 		case 'r':
-			ODR_Value = 1 << 6;
+			ODR_Value = RED;
 			Transmit_String("\nRed LED ");
 			break;
 		case 'g':
-			ODR_Value = 1 << 9;
+			ODR_Value = GREEN;
 		Transmit_String("\nGreen LED ");
 			break;
 		case 'b':
-			ODR_Value = 1 << 7;
+			ODR_Value = BLUE;
 			Transmit_String("\nBlue LED ");
 			break;
 		case 'o':
-			ODR_Value = 1 << 8;
+			ODR_Value = ORANGE;
 			Transmit_String("\nOrange LED ");
 			break;
 		default:

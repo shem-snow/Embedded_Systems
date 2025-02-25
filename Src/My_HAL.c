@@ -88,9 +88,13 @@ void HAL_RCC_CLK_Enable(char GPIOx, uint32_t number) {
 		case 'F': // GPIOF
 			RCC->AHBENR |= RCC_AHBENR_GPIOFEN;
     		break;
-		case 'I': // Interrupts
-			// TODO: At some point when I want to use the NVIC for more interrupts than just the button, I'll need to create this.
-			// For now, I'll just enable the clocks manually as I need to.
+		case 'I': // Interrupts and I2C
+			if(number == 1)
+				; // TODO:
+			else if(number == 2)
+				RCC->APB1ENR |= RCC_APB1ENR_I2C2EN;
+			else
+				; // TODO:
 			break;
 		case 'S': // SYSCFG
 			RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;
@@ -156,21 +160,12 @@ void HAL_GPIO_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef *GPIO_Init) {
 
 /*
 	Configures a specified Pin to the specified Alternate Function mode.
-	The "AFR_high_or_low" parameter accounts for there being more than one Alternate Function register.
-	
-	Note that THERE ARE ONLY TWO!! Therefore setting AFR_high_or_low to anything other than 0 or 1 would 
-	map to an unintentional place.
 */
-void HAL_ALTERNATE_PIN_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init, uint8_t AFR_high_or_low) {
-	
-	
-	if(AFR_high_or_low != 0 && AFR_high_or_low != 1)
-		return; // Just don't do that.
-	else {
-		// Assign the alternate function.
-		GPIOx->AFR[AFR_high_or_low] &= ~(15 << (4*(GPIO_Init->PinNumber))); // Clear the current bits
-		GPIOx->AFR[AFR_high_or_low] |= ((GPIO_Init->AlternateFunction) << (4*(GPIO_Init->PinNumber))); // Set the new bits
-	}
+void HAL_ALTERNATE_PIN_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init) {
+	int index = (GPIO_Init->PinNumber > 7)? 1 : 0;
+
+	GPIOx->AFR[index] &= ~(15 << (4*(GPIO_Init->PinNumber))); // Clear the current bits
+	GPIOx->AFR[index] |= ((GPIO_Init->AlternateFunction) << (4*(GPIO_Init->PinNumber))); // Set the new bits
 }
 
 int Get_GPIO_Pin_Number(GPIO_InitTypeDef *GPIO_Init){
@@ -236,8 +231,8 @@ void HAL_GPIO_TogglePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) {
  * 		or set it in the EXTI_FTSR to make the interrupt trigger on the falling edge.
  * 	3: Configure the NVIC to select the specific external interrupt.
  */
-void Reset_Interrupt(char pin) {
-	switch(pin) {
+void Reset_Interrupt(char peripheral) {
+	switch(peripheral) {
 		case 'A':
 			// Set the Interrupt Mask Register (IMR) to enable external interrupts (instructions on page 219 in the peripheral manual and example code on page 947)
 			EXTI->IMR  |= EXTI_IMR_MR0; // |= 1
@@ -278,4 +273,53 @@ void Reset_Interrupt(char pin) {
 			break;
 		default:
 	}
+}
+
+
+/*
+* Initializes LEDs (PC6-9) turned off.
+*/
+void Init_LEDs(void) {
+	
+	// Initialize Port C: LEDs and pins
+	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+	
+	// Set the MODER to output mode (01)
+	GPIOC->MODER &= ~(1<< (2*6 +1) );
+	GPIOC->MODER &= ~(1<< (2*7 +1) );
+	GPIOC->MODER &= ~(1<< (2*8 +1) );
+	GPIOC->MODER &= ~(1<< (2*9 +1) );
+	
+	GPIOC->MODER |= 1 << 2*6;
+	GPIOC->MODER |= 1 << 2*7;
+	GPIOC->MODER |= 1 << 2*8;
+	GPIOC->MODER |= 1 << 2*9;
+	
+	// Set output type register to push-pull (0)
+	GPIOC->OTYPER &= ~(RED);
+	GPIOC->OTYPER &= ~(BLUE);
+	GPIOC->OTYPER &= ~(ORANGE);
+	GPIOC->OTYPER &= ~(GREEN);
+	
+	// Set output speed register to low speed (x0)
+	GPIOC->OSPEEDR &= ~(1 << 2*6);
+	GPIOC->OSPEEDR &= ~(1 << 2*7);
+	GPIOC->OSPEEDR &= ~(1 << 2*8);
+	GPIOC->OSPEEDR &= ~(1 << 2*9);
+	
+	// Set the pins to no pull-up, pull-down (00)
+	GPIOC->PUPDR &= ~(3<<2*6);
+	GPIOC->PUPDR &= ~(3<<2*7);
+	GPIOC->PUPDR &= ~(3<<2*8);
+	GPIOC->PUPDR &= ~(3<<2*9);
+	
+	// Initialize each light to be off
+	GPIOC->ODR &= ~RED;
+	GPIOC->ODR &= ~BLUE;
+	GPIOC->ODR &= ~ORANGE;
+	GPIOC->ODR &= ~GREEN;
+}
+
+void Init_Gyroscope(void) {
+	
 }

@@ -8,4 +8,3 @@ build
 *.lst
 .DS_Store
 .project
-.Src/garbage_code.txt

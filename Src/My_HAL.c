@@ -320,6 +320,51 @@ void Init_LEDs(void) {
 	GPIOC->ODR &= ~GREEN;
 }
 
+/*
+	Follows the I2C protocol to enable the gyroscope.
+	That's done by transmitting two values:
+		1. The address of the "CTRL_REG1" register which controls how the gyroscope works.
+		2. The settings we want configured so the gyroscope operates the way we want. 
+*/
 void Init_Gyroscope(void) {
 	
+	// Set the parameters for the current transaction (in CR2)
+	I2C2->CR2 |= (0x69 << 1); // Slave address for the gyroscope is 0x69. Shift by 1 because the 8th and 0th bits are don't cares.
+	I2C2->CR2 |= (2  << 16); // NBYTES = 2
+	I2C2->CR2 &= ~(1 << 10); // Write direction
+	I2C2->CR2 |= (1 << 13); // Start generation
+	
+	// Wait until either TXIS (1<<1) or NACKF (1<<4) flags are set
+	while(!( (I2C2->ISR) & ( (I2C_ISR_TXIS) | (I2C_ISR_NACKF) ) )) {}
+
+	// Then write the address of the "CTRL_REG1" register into TXDR
+	I2C2->TXDR = 0x20;
+	
+	// Indicate an error by setting the RED LED high.
+	if (I2C2->ISR & I2C_ISR_NACKF)
+		// Error_loop(GREEN, 100); // TODO: This is true
+		HAL_GPIO_WritePin(GPIOC, RED, GPIO_PIN_SET); 
+		
+	// Wait until either TXIS (1<<1) or NACKF (1<<4) flags are set
+	while( ! ( (I2C2->ISR & I2C_ISR_TXIS) | (I2C2->ISR & I2C_ISR_NACKF) ) ) {}
+	
+	// Now write the intended value of the control reg 1 into TXDR.
+	// The third bit specifies "normal or sleep mode" when set but "power down mode" when not set.
+	// The 0th, 1st, and 2nd bits enable the x, y, and z axis respectively.
+	I2C2->TXDR = ( (1<<3) | (1<<1) | (1<<0) ); // 0x0B;
+
+	// Indicate an error by setting the RED LED high.
+	if (I2C2->ISR & I2C_ISR_NACKF)
+		HAL_GPIO_WritePin(GPIOC, RED, GPIO_PIN_SET);
+
+
+	// Wait for the transmission to complete.
+	while(!( (I2C2->ISR) & ( (I2C_ISR_TC) | (I2C_ISR_NACKF)) )) {} // Transfer Complete is the 6th bit.
+	
+	// Indicate an error by setting the RED LED high.
+	if (I2C2->ISR & I2C_ISR_NACKF)
+		HAL_GPIO_WritePin(GPIOC, RED, GPIO_PIN_SET);
+	
+	// Release the I2C BUS.
+	I2C2->CR2 |= I2C_CR2_STOP; // 1<<14
 }

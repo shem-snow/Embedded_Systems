@@ -342,8 +342,8 @@ void Init_Gyroscope(void) {
 	
 	// Indicate an error by setting the RED LED high.
 	if (I2C2->ISR & I2C_ISR_NACKF)
-		// Error_loop(GREEN, 100); // TODO: This is true
 		HAL_GPIO_WritePin(GPIOC, RED, GPIO_PIN_SET); 
+		
 		
 	// Wait until either TXIS (1<<1) or NACKF (1<<4) flags are set
 	while( ! ( (I2C2->ISR & I2C_ISR_TXIS) | (I2C2->ISR & I2C_ISR_NACKF) ) ) {}
@@ -357,7 +357,6 @@ void Init_Gyroscope(void) {
 	if (I2C2->ISR & I2C_ISR_NACKF)
 		HAL_GPIO_WritePin(GPIOC, RED, GPIO_PIN_SET);
 
-
 	// Wait for the transmission to complete.
 	while(!( (I2C2->ISR) & ( (I2C_ISR_TC) | (I2C_ISR_NACKF)) )) {} // Transfer Complete is the 6th bit.
 	
@@ -366,5 +365,113 @@ void Init_Gyroscope(void) {
 		HAL_GPIO_WritePin(GPIOC, RED, GPIO_PIN_SET);
 	
 	// Release the I2C BUS.
-	I2C2->CR2 |= I2C_CR2_STOP; // 1<<14
+	// I2C2->CR2 |= I2C_CR2_STOP; // 1<<14
+}
+
+/*
+	Our gyroscope uses 8-bit registers to represent 16-bit data for orientation on an axis.
+	Because of this, we must mask the LSB and MSB together.ADC1_2_EXTERNALTRIG_T1_CC4
+
+	Important addresses are:
+		- x_LSB: 0x28
+		- x_MSB: 0x29
+		- y_LSB: 0x2a
+		- y_MSB: 0x2b
+		- z_LSB: 0x2c
+		- z_MSB: 0x2d
+
+	For each value we want, we must operate in two steps.
+	The first is to specify the address of the register we're reading and the second is to read its actual data.
+	
+	This tells us the physical orientation of the gyroscope in the axis' direction (depending on parameter "c").
+
+	@param c: 
+		The way I decided to specify which bit to read is by relating upper and lower case to MSB or LSB respectively.
+*/
+int8_t Read_Gyroscope_Output(char c) {
+
+	// Figure out what axis is being read.
+	int address;
+	switch (c) {
+	case 'x':
+		address = 0x28;
+		break;
+	case 'X':
+		address = 0x29;
+		break;
+	case 'y':
+		address = 0x2a;
+		break;
+	case 'Y':
+		address = 0x2b;
+		break;
+	// TODO: implement z if you come back here.
+	default:
+		return -1; // Sentinal value for an invalid input.
+	}
+
+	// ________________________________________ Step one: write the address of the register you want to read from to the TXDR ________________________________________
+
+	// Clear the number of bytes (bits 23:16) and slave address (bits 9:0) fields of CR2
+	I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
+
+	// Set the parameters for the current transaction (in CR2 => CTRL_REG1). First step is to write the address of what you want to read from.
+	I2C2->CR2 |= (0xD2 << I2C_CR2_SADD_Pos); // Slave address for the gyroscope.
+	I2C2->CR2 |= (0x1 << I2C_CR2_NBYTES_Pos); // bit 16
+	I2C2->CR2 &= ~(I2C_CR2_RD_WRN_Msk); // Write direction (1<<10)
+	I2C2->CR2 |= (I2C_CR2_START_Msk); // Start generation (1<<13)
+
+	// Wait until either TXIS (1<<1) or NACKF (1<<4) flags are set
+	while( ! ( (I2C2->ISR & I2C_ISR_TXIS) | (I2C2->ISR & I2C_ISR_NACKF) ) ) {
+		
+	}
+
+	// Write the address of which axis we want to read from.
+	if ((I2C2->ISR & I2C_ISR_TXIS))
+		I2C2->TXDR = address;
+
+	// If the slave did not respond, indicate that by turning the orange LED on.
+	if ((I2C2->ISR & I2C_ISR_NACKF))
+		HAL_GPIO_WritePin(GPIOC, ORANGE, GPIO_PIN_SET);
+	
+	// Wait for the transmission to complete.
+	while(!( (I2C2->ISR) & ( (I2C_ISR_TC) | (I2C_ISR_NACKF)) )) { // Transfer Complete is the 6th bit.
+		
+	} 
+	
+	// Indicate an error by setting the RED LED high.
+	if (I2C2->ISR & I2C_ISR_NACKF)
+		HAL_GPIO_WritePin(GPIOC, RED, GPIO_PIN_SET);
+	
+
+	// ________________________________________ Step two: read from the register and return the value________________________________________
+	
+	// Set the parameters for the current transaction (in CR2 => CTRL_REG1) to READ
+	I2C2->CR2 |= (0xD2 << I2C_CR2_SADD_Pos);   // Slave address = 0x69. 0xD2 is 0x69 << 1
+	I2C2->CR2 |= (0x1  << I2C_CR2_NBYTES_Pos); // bit 16
+	I2C2->CR2 |= (I2C_CR2_RD_WRN_Msk); // Read direction (1<<10)
+	I2C2->CR2 |= (I2C_CR2_START_Msk); // Start generation (1<<13)
+
+	// Wait until either RXNE (1<<2) or NACKF (1<<4) flags are set
+	while( ! ( (I2C2->ISR & I2C_ISR_RXNE) | (I2C2->ISR & I2C_ISR_NACKF) ) ) {
+		
+	}
+
+	// If the slave did not respond, indicate that on the ORANGE LED.
+	if ((I2C2->ISR & I2C_ISR_NACKF))
+		HAL_GPIO_WritePin(GPIOC, ORANGE, GPIO_PIN_SET);
+
+	// Then save the value you read.
+	int8_t ret = I2C2->RXDR;
+
+	// Wait for the transmission to complete.
+	while(!( (I2C2->ISR) & ( (I2C_ISR_TC) | (I2C_ISR_NACKF)) )) { // Transfer Complete is the 6th bit.
+		
+	} 
+	
+	// Indicate an error by setting the RED LED high.
+	if (I2C2->ISR & I2C_ISR_NACKF)
+		HAL_GPIO_WritePin(GPIOC, RED, GPIO_PIN_SET);
+
+	return ret;
 }

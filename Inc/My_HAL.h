@@ -75,3 +75,4 @@ void Init_USART3(void);
 void Init_LEDs(void);
 void Init_I2C2(void);
 void Init_Gyroscope(void);
+int8_t Read_Gyroscope_Output(char c);

@@ -71,7 +71,10 @@ int Get_GPIO_Pin_Number(GPIO_InitTypeDef *GPIO_Init);
 void HAL_RCC_CLK_Enable(char GPIOx, uint32_t number) {
 	switch (GPIOx) {
 		case 'A': // GPIOA
-			RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+			if(number == 0)
+				RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+			else
+				RCC->APB2ENR |= RCC_APB2ENR_ADC1EN; // non-zero number => ADC
     		break;
   		case 'B': // GPIOB
 			RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
@@ -80,7 +83,10 @@ void HAL_RCC_CLK_Enable(char GPIOx, uint32_t number) {
 			RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
     		break;
 		case 'D': // GPIOD
-			RCC->AHBENR |= RCC_AHBENR_GPIODEN;
+			if(number == 0)
+				RCC->AHBENR |= RCC_AHBENR_GPIODEN;
+			else
+				RCC->APB1ENR |= RCC_APB1ENR_DACEN; // non-zero number => DAC
     		break;
 		case 'E': // GPIOE
 			RCC->AHBENR |= RCC_AHBENR_GPIOEEN;
@@ -474,4 +480,65 @@ int8_t Read_Gyroscope_Output(char c) {
 		HAL_GPIO_WritePin(GPIOC, RED, GPIO_PIN_SET);
 
 	return ret;
+}
+
+
+void Init_ADC(GPIO_TypeDef* GPIOx, uint16_t pin_number) {
+	
+	GPIOx->MODER |= 3 << pin_number; // Analog mode (11)
+	GPIOx->PUPDR &= ~(3 << pin_number); // No pull-up, pull down (00)
+	ADC1->CHSELR |= (1 << 10 ); // Configure the pin for ADC conversion on channel 10 (therefore the 10th bit position)
+	
+	// 8-bit resolution (10)
+	ADC1->CFGR1 |= (2 << 3);
+	ADC1->CFGR1 &= ~(1 << 3);
+	
+	// Continuous conversion mode
+	ADC1->CFGR1 |= (1 << 13);
+	
+	// Trigger source: Hardware triggers disabled (software-triggered only).
+	ADC1->CFGR1 &= ~(3 << 10);
+}
+
+void Calibrate_and_start_ADC(void) {
+	
+	// ___________________Calibrate (reference appendix A.7.1)___________________
+	// Calibration is initialted when ADEN = 1. So initialize it to zero/disable it.
+	if( (ADC1->CR & ADC_CR_ADEN) !=0)
+		ADC1->CR |= 1 << 1;
+	// Wait for the action to complete.
+	while ( (ADC1->CR & ADC_CR_ADEN) != 0) {
+	}
+	// Clear the DMA bit to disable DMA.
+	ADC1->CFGR1 &= ~(1);
+	// Trigger the calibration in the control register.
+	ADC1->CR |= (1 << 31);
+	// Wait for the action to complete.
+	while ( (ADC1->CR & ADC_CR_ADCAL) != 0) {
+	}
+	
+	// ___________________ Enable Sequence code (reference appendix A.7.1)___________________
+	// Make sure the ISR knows ADC is ready.
+	
+	if( (ADC1->ISR & ADC_ISR_ADRDY) != 0)
+		ADC1->ISR |= ADC_ISR_ADRDY;
+	ADC1->CR |= ADC_CR_ADEN;
+	// Wait for the action to complete
+	while ( (ADC1->ISR & ADC_ISR_ADRDY) == 0 ) {
+	}
+	
+	// _____________________ Start _____________________
+	ADC1->CR |= (1 << 2);
+}
+
+void Init_DAC(GPIO_TypeDef* GPIOx, uint16_t pin_number) {
+	// Configure PA4
+	GPIOx->MODER |= 3 << (2*pin_number); // Analog mode (11)
+	GPIOx->PUPDR &= ~(3 << (2*pin_number)); // No pull-up, pull down (00)
+	GPIOx->OTYPER &= ~(3 << (2*pin_number)); // Push/Pull (00)
+	GPIOx->OSPEEDR &= ~(3 << (2*pin_number)); // Low speed (00)
+	
+	// Actually initialize the DAC
+	DAC1->CR &= ~(7 << 19); // Software-triggered (111)
+	DAC1->CR |= 1; // Enable the DAC Channel 1
 }

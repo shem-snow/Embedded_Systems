@@ -87,6 +87,7 @@ void Checkoff_5_2(void) {
 		// The instructions also said to use a threshold value for more accuracy. I'll try that
 		int neg_thresh = -10;
 		int pos_thresh = 10;
+		
 		if (x_total < neg_thresh) {
 			GPIOC->ODR &= ~ORANGE;
 			GPIOC->ODR |= GREEN;
@@ -145,7 +146,7 @@ void Checkoff_5_1(void) {
 			// On success, re-configure the parameters for this transaction. This time, set the read/write direction to read.
 			I2C2->CR2 |= 0x69 << 1; // Slave (gyroscope) address is 0x69. Shift 1 because the 0th and 9th bits are don't cares.
 			I2C2->CR2 |= 1 << 16; // Number of bytes to send = 1.
-			I2C2->CR2 |= 1 << 10; // Set the read/write direction to write (relative to the master device).
+			I2C2->CR2 |= 1 << 10; // Set the read/write direction to read (relative to the master device).
 			I2C2->CR2 |= I2C_CR2_START; // 1<<13
 
 			// Just like before, wait for success or failure in establishing the connection.
@@ -213,7 +214,7 @@ void Init_I2C2(void) {
 	GPIOC->ODR |= (1 << 0); // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
 
 	// Setting the 0'th bit high selects I2C. Setting it low selects SPI. 0 means no action (use default which is SPI). 1 means do the other thing.
-	GPIOC->BSRR = (1 << 0);
+	GPIOC->BSRR = (1 << 0); // I think this is the same as writing to ODR
 	
 	// PB14 controls the slave address when in I2C mode.
 	GPIOB->MODER &= ~(2 << 2*14);

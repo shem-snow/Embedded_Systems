@@ -25,10 +25,10 @@
 #define GPIO_Pull_down 0x2
 
 
-#define RED  (1<<6)
-#define BLUE (1<<7)
-#define ORANGE (1<<8)
-#define GREEN (1<<9)
+#define RED  1<<6
+#define BLUE 1<<7
+#define ORANGE 1<<8
+#define GREEN 1<<9
 
 /** 
   * @brief  This struct contains the registers you would use for GPIO pins.
@@ -76,3 +76,6 @@ void Init_LEDs(void);
 void Init_I2C2(void);
 void Init_Gyroscope(void);
 int8_t Read_Gyroscope_Output(char c);
+void Init_ADC(GPIO_TypeDef* GPIOx, uint16_t pin_number);
+void Calibrate_and_start_ADC(void);
+void Init_DAC(GPIO_TypeDef* GPIOx, uint16_t pin_number);

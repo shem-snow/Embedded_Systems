@@ -519,10 +519,9 @@ void Calibrate_and_start_ADC(void) {
 	
 	// ___________________ Enable Sequence code (reference appendix A.7.1)___________________
 	// Make sure the ISR knows ADC is ready.
-	
 	if( (ADC1->ISR & ADC_ISR_ADRDY) != 0)
 		ADC1->ISR |= ADC_ISR_ADRDY;
-	ADC1->CR |= ADC_CR_ADEN;
+	ADC1->CR |= ADC_CR_ADEN; // 1 << 0
 	// Wait for the action to complete
 	while ( (ADC1->ISR & ADC_ISR_ADRDY) == 0 ) {
 	}
@@ -534,11 +533,8 @@ void Calibrate_and_start_ADC(void) {
 void Init_DAC(GPIO_TypeDef* GPIOx, uint16_t pin_number) {
 	// Configure PA4
 	GPIOx->MODER |= 3 << (2*pin_number); // Analog mode (11)
-	GPIOx->PUPDR &= ~(3 << (2*pin_number)); // No pull-up, pull down (00)
-	GPIOx->OTYPER &= ~(3 << (2*pin_number)); // Push/Pull (00)
-	GPIOx->OSPEEDR &= ~(3 << (2*pin_number)); // Low speed (00)
 	
 	// Actually initialize the DAC
-	DAC1->CR &= ~(7 << 19); // Software-triggered (111)
-	DAC1->CR |= 1; // Enable the DAC Channel 1
+	DAC1->CR |= DAC_CR_TSEL1; // Software-triggered (111). (7 << 19) for channel 2. (7<<3) for channel 1.
+	DAC1->CR |= DAC_CR_EN1; // Enable the DAC Channel 1 (1<<0)
 }

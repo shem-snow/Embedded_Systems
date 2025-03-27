@@ -76,6 +76,8 @@ void PendSV_Handler(void)
 void SysTick_Handler(void) {
   #if defined(LAB2)
     Lab2_SysTick_Handler();
+  #elif defined(LAB7)
+    Lab7_SysTick_Handler();
   #else
     HAL_IncTick();
   #endif

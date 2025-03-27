@@ -97,7 +97,7 @@ void HAL_SYSTICK_Callback(void) {
  */
 volatile uint32_t encoder_count = 0;
 
-int lab7_main(int argc, char* argv[]) {
+int lab7_main(void) {
 
     // Initializations of global variables
     debouncer = 0;

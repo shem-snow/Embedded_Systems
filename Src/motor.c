@@ -10,16 +10,22 @@
  * - Speed changes from 80 to 0 RPM
  */
 #include "motor.h"
+#include "My_HAL.h"
 
 volatile int16_t error_integral = 0;    // Integrated error signal
 volatile uint8_t duty_cycle = 0;    	// Output PWM duty cycle
-volatile int16_t target_rpm = 0;    	// Desired speed target
+volatile int16_t target_rpm = 0;    	// Desired speed target. Systick callback updates this.
+volatile int8_t rpm_flag = 0; // Systick callback uses this to edit target rpm.
 volatile int16_t motor_speed = 0;   	// Measured motor speed
 volatile int8_t adc_value = 0;      	// ADC measured motor current
 volatile int16_t error = 0;         	// Speed error signal
 volatile uint8_t Kp = 1;            	// Proportional gain
 volatile uint8_t Ki = 1;            	// Integral gain
 
+/*
+    Uses to clamp error correction results within min and max bounds in order to 
+    prevent windup.
+*/
 int16_t clamp(int16_t x, int16_t low, int16_t high) {
     int16_t retval = x;
     if(x < low)
@@ -36,12 +42,16 @@ void motor_init(void) {
     ADC_init();
 }
 
-// Sets up the PWM and direction signals to drive the H-Bridge
+/*
+    Sets up the PWM and direction signals to drive the H-Bridge.
+    This is just the initialization. It sets the duty cycle defaults to 100 %.
+    The PI_Update() method will adjust the duty cycle as it needs to.
+*/
 void pwm_init(void) {
     
     // Set up pin PA4 for H-bridge PWM output (TIMER 14 CH1)
     GPIOA->MODER |= (1 << 9);
-    GPIOA->MODER &= ~(1 << 8);
+    GPIOA->MODER &= ~(1 << 8); // Alternate function mode
 
     // Set PA4 to AF4,
     GPIOA->AFR[0] &= 0xFFF0FFFF; // clear PA4 bits,
@@ -71,7 +81,10 @@ void pwm_init(void) {
     TIM14->CR1 |= TIM_CR1_CEN;              // Enable timer
 }
 
-// Set the duty cycle of the PWM, accepts (0-100)
+/*
+    Set the duty cycle of the PWM, accepts (0-100).
+    This function is called by your error correction method.
+*/ 
 void pwm_setDutyCycle(uint8_t duty) {
     if(duty <= 100) {
         TIM14->CCR1 = ((uint32_t)duty*TIM14->ARR)/100;  // Use linear transform to produce CCR1 value
@@ -79,7 +92,9 @@ void pwm_setDutyCycle(uint8_t duty) {
     }
 }
 
-// Sets up encoder interface to read motor speed
+/*
+    Sets up encoder interface to read motor speed every time timer 6 interrupts
+*/
 void encoder_init(void) {
     
     // Set up encoder input pins (TIMER 3 CH1 and CH2)
@@ -136,7 +151,7 @@ void TIM6_DAC_IRQHandler(void) {
 
 void ADC_init(void) {
 
-    // Configure PA1 for ADC input (used for current monitoring)
+    // Configure PA1 to analog mode (for ADC input used for current monitoring)
     GPIOA->MODER |= (GPIO_MODER_MODER1_0 | GPIO_MODER_MODER1_1);
 
     // Configure ADC to 8-bit continuous-run mode, (asynchronous clock mode)
@@ -222,4 +237,8 @@ void PI_update(void) {
     if(ADC1->ISR & ADC_ISR_EOC) {   // If the ADC has new data for us
         adc_value = ADC1->DR;       // Read the motor current for debug viewing
     }
+
+
+
+    GPIOC->ODR ^= ORANGE; // This indicates PI_update() is being triggered.
 }

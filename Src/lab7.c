@@ -53,8 +53,8 @@ void  button_init(void) {
     // Initialize PA0 for button input
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN;                                          // Enable peripheral clock to GPIOA
     GPIOA->MODER &= ~(GPIO_MODER_MODER0_0 | GPIO_MODER_MODER0_1);               // Set PA0 to input
-    GPIOC->OSPEEDR &= ~(GPIO_OSPEEDR_OSPEEDR0_0 | GPIO_OSPEEDR_OSPEEDR0_1);     // Set to low speed
-    GPIOC->PUPDR |= GPIO_PUPDR_PUPDR0_1;                                        // Set to pull-down
+    GPIOA->OSPEEDR &= ~(GPIO_OSPEEDR_OSPEEDR0_0 | GPIO_OSPEEDR_OSPEEDR0_1);     // Set to low speed
+    GPIOA->PUPDR |= GPIO_PUPDR_PUPDR0_1;                                        // Set to pull-down
 }
 
 /* Called by SysTick Interrupt
@@ -66,26 +66,51 @@ void HAL_SYSTICK_Callback(void) {
     // You can't call any functions in here that use delay
 
     debouncer = (debouncer << 1);
-    if(GPIOA->IDR & (1 << 0)) {
+    if(GPIOA->IDR & (1 << 0)) { // This is PA0 (the button).
         debouncer |= 0x1;
     }
 
+
     if(debouncer == 0x7FFFFFFF) {
-    switch(target_rpm) {
-        case 80:
-            target_rpm = 50;
-            break;
-        case 50:
-            target_rpm = 81;
-            break;
-        case 0:
-            target_rpm = 80;
-            break;
-        default:
-            target_rpm = 0;
-            break;
-        }
+        switch(rpm_flag) {
+            case 0:
+                target_rpm = 80; // 80
+                rpm_flag++;
+                GPIOC->ODR ^= RED;
+                break;
+            case 1:
+                target_rpm = 50; // 50
+                rpm_flag++;
+                GPIOC->ODR ^= RED;
+                break;
+            case 2:
+                target_rpm = 81; // 81
+                rpm_flag++;
+                GPIOC->ODR ^= RED;
+                break;
+            case 3:
+                target_rpm = 0; // 0
+                rpm_flag = 0;
+                GPIOC->ODR ^= RED;
+                break;
+            default:
+                target_rpm = 0;
+                rpm_flag = 0;
+                break;
+            }
     }
+
+   
+  // Blink the blue LED to ensure this is being called.
+  static int Lab7_SysTick_accumulator;
+
+  // Toggle the blue LED every 200 ms
+  if(Lab7_SysTick_accumulator >= 200) {
+    GPIOC->ODR ^= BLUE;
+    Lab7_SysTick_accumulator = 0;
+  }
+  else
+    Lab7_SysTick_accumulator += 1;
 }
 
 /* -------------------------------------------------------------------------------------------------------------
@@ -106,7 +131,7 @@ int lab7_main(void) {
 	HAL_Init();
 
     // Peripheral initializations
-    LED_init();
+    Init_LEDs();
     button_init();
     motor_init();
 

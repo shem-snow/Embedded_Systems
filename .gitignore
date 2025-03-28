@@ -8,3 +8,5 @@ build
 *.lst
 .DS_Store
 .project
+
+.fake

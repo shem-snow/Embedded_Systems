@@ -21,6 +21,7 @@ volatile int8_t adc_value = 0;      	// ADC measured motor current
 volatile int16_t error = 0;         	// Speed error signal
 volatile uint8_t Kp = 1;            	// Proportional gain
 volatile uint8_t Ki = 1;            	// Integral gain
+volatile uint8_t speed_change = 0;
 
 /*
     Uses to clamp error correction results within min and max bounds in order to 
@@ -39,7 +40,7 @@ int16_t clamp(int16_t x, int16_t low, int16_t high) {
 void motor_init(void) {
     pwm_init();
     encoder_init();
-    ADC_init();
+    ADC_init(); // Just for debugging in STMStudio
 }
 
 /*
@@ -87,8 +88,9 @@ void pwm_init(void) {
 */ 
 void pwm_setDutyCycle(uint8_t duty) {
     if(duty <= 100) {
-        TIM14->CCR1 = ((uint32_t)duty*TIM14->ARR)/100;  // Use linear transform to produce CCR1 value
         // (CCR1 == "pulse" parameter in PWM struct used by peripheral library)
+        TIM14->CCR1 = ((uint32_t)duty*TIM14->ARR)/100;  // Use linear transform to produce CCR1 value
+        GPIOC->ODR ^= ORANGE;
     }
 }
 
@@ -130,8 +132,8 @@ void encoder_init(void) {
     TIM6->DIER |= TIM_DIER_UIE;             // Enable update event interrupt
     TIM6->CR1 |= TIM_CR1_CEN;               // Enable Timer
 
-    NVIC_EnableIRQ(TIM6_DAC_IRQn);          // Enable interrupt in NVIC
     NVIC_SetPriority(TIM6_DAC_IRQn,2);
+    NVIC_EnableIRQ(TIM6_DAC_IRQn);          // Enable interrupt in NVIC
 }
 
 // Encoder interrupt to calculate motor speed, also manages PI controller
@@ -145,8 +147,33 @@ void TIM6_DAC_IRQHandler(void) {
     
     // Call the PI update function
     PI_update();
-
+    // log_data();
     TIM6->SR &= ~TIM_SR_UIF;        // Acknowledge the interrupt
+}
+
+union byte_split
+{
+    uint32_t uword;
+    int32_t word;
+    uint8_t bytes[4];
+};
+
+void log_data(void) {
+    // Begin critical section
+    __disable_irq();
+    uint32_t duty_cycle_copy = duty_cycle;    
+    int32_t target_rpm_copy = target_rpm;
+    int32_t motor_speed_copy = motor_speed;
+    // End critical section
+    __enable_irq();
+
+    union byte_split data;
+    data.uword = duty_cycle_copy;
+    SEGGER_RTT_Write (0, &data.bytes, 4);
+    data.word = target_rpm_copy;
+    SEGGER_RTT_Write (1, &data.bytes, 4);
+    data.word = motor_speed_copy;
+    SEGGER_RTT_Write (2, &data.bytes, 4);
 }
 
 void ADC_init(void) {
@@ -194,8 +221,10 @@ void PI_update(void) {
      *       I recommend converting to whatever units result in larger values, gives
      *       more resolution.
      */
-    error = 2*target_rpm - motor_speed;
-    
+
+    // desired - measured  in ticks per time.
+    // error = 2*target_rpm - motor_speed;
+    error = target_rpm * 3200 / 60 * 0.045 - motor_speed; // = 2.4*target_rpm - motor_speed
     
     
     /// Calculate integral portion of PI controller, write to "error_integral" variable.
@@ -204,8 +233,10 @@ void PI_update(void) {
      *       You'll read more about this for the post-lab. The exact value is arbitrary
      *       but affects the PI tuning.
      */
-    error_integral = clamp( (error_integral + (error*duty_cycle)) , 0, 3200);
-    
+
+     // current += currrently_accumulating_correction
+    // error_integral = clamp( (error_integral + (error*duty_cycle)) , 0, 3200);
+    error_integral = clamp(error_integral + Ki*error, 0, 3200);
     
     /// Calculate proportional portion, add integral and write to "output" variable
     int16_t output = (Kp*error) + Ki * error_integral;
@@ -230,15 +261,11 @@ void PI_update(void) {
      output = clamp( (output >> 5) , 0, 100);
     
     pwm_setDutyCycle(output);
-    duty_cycle = output;            // For debug viewing
-
-    // Read the ADC value for current monitoring, actual conversion into meaningful units 
-    // will be performed by STMStudio
-    if(ADC1->ISR & ADC_ISR_EOC) {   // If the ADC has new data for us
-        adc_value = ADC1->DR;       // Read the motor current for debug viewing
-    }
 
 
-
-    GPIOC->ODR ^= ORANGE; // This indicates PI_update() is being triggered.
+    // For debug viewing in STMStudio, read the ADC value for current monitoring, actual conversion into meaningful units
+    // duty_cycle = output;
+    // if(ADC1->ISR & ADC_ISR_EOC) {   // If the ADC has new data for us
+    //     adc_value = ADC1->DR;       // Read the motor current for debug viewing
+    // }
 }

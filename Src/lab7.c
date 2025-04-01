@@ -23,7 +23,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "stm32f0xx.h"
+
 #include "motor.h"
+#include "SEGGER_RTT.h"
 
 // Local prototypes -----------------------------------------
 void ungate_clocks(void);
@@ -72,24 +74,27 @@ void HAL_SYSTICK_Callback(void) {
 
 
     if(debouncer == 0x7FFFFFFF) {
+
+        // Begin critical section
+        __disable_irq();
         switch(rpm_flag) {
             case 0:
-                target_rpm = 80; // 80
+                target_rpm = 4; // 80
                 rpm_flag++;
                 GPIOC->ODR ^= RED;
                 break;
             case 1:
-                target_rpm = 50; // 50
+                target_rpm = 16; // 50
                 rpm_flag++;
                 GPIOC->ODR ^= RED;
                 break;
             case 2:
-                target_rpm = 81; // 81
+                target_rpm = 64; // 81
                 rpm_flag++;
                 GPIOC->ODR ^= RED;
                 break;
             case 3:
-                target_rpm = 0; // 0
+                target_rpm = 80; // 0
                 rpm_flag = 0;
                 GPIOC->ODR ^= RED;
                 break;
@@ -97,14 +102,13 @@ void HAL_SYSTICK_Callback(void) {
                 target_rpm = 0;
                 rpm_flag = 0;
                 break;
-            }
+        }
+        __enable_irq(); // End critical section
     }
 
    
-  // Blink the blue LED to ensure this is being called.
+  // Blink the blue LED every 200 loops to ensure this is being called.
   static int Lab7_SysTick_accumulator;
-
-  // Toggle the blue LED every 200 ms
   if(Lab7_SysTick_accumulator >= 200) {
     GPIOC->ODR ^= BLUE;
     Lab7_SysTick_accumulator = 0;
@@ -136,9 +140,9 @@ int lab7_main(void) {
     motor_init();
 
     while (1) {
-        GPIOC->ODR ^= GPIO_ODR_9;           // Toggle green LED (heartbeat)
         encoder_count = TIM2->CNT;
-        HAL_Delay(128);                      // Delay 1/8 second
+        HAL_GPIO_TogglePin(GPIOC, GREEN); // Toggle green LED (heartbeat)
+        HAL_Delay(128); // Delay 1/8 second
     }
 
 

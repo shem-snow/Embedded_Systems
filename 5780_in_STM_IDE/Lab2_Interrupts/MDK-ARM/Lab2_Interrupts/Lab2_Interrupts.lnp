@@ -1,0 +1,25 @@
+--cpu Cortex-M0
+"lab2_interrupts\startup_stm32f072xb.o"
+"lab2_interrupts\main.o"
+"lab2_interrupts\stm32f0xx_it.o"
+"lab2_interrupts\stm32f0xx_hal_msp.o"
+"lab2_interrupts\stm32f0xx_hal_tim.o"
+"lab2_interrupts\stm32f0xx_hal_tim_ex.o"
+"lab2_interrupts\stm32f0xx_hal_rcc.o"
+"lab2_interrupts\stm32f0xx_hal_rcc_ex.o"
+"lab2_interrupts\stm32f0xx_hal.o"
+"lab2_interrupts\stm32f0xx_hal_i2c.o"
+"lab2_interrupts\stm32f0xx_hal_i2c_ex.o"
+"lab2_interrupts\stm32f0xx_hal_gpio.o"
+"lab2_interrupts\stm32f0xx_hal_dma.o"
+"lab2_interrupts\stm32f0xx_hal_cortex.o"
+"lab2_interrupts\stm32f0xx_hal_pwr.o"
+"lab2_interrupts\stm32f0xx_hal_pwr_ex.o"
+"lab2_interrupts\stm32f0xx_hal_flash.o"
+"lab2_interrupts\stm32f0xx_hal_flash_ex.o"
+"lab2_interrupts\stm32f0xx_hal_exti.o"
+"lab2_interrupts\system_stm32f0xx.o"
+--strict --scatter "Lab2_Interrupts\Lab2_Interrupts.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "Lab2_Interrupts.map" -o Lab2_Interrupts\Lab2_Interrupts.axf

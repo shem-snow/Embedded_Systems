@@ -8,5 +8,8 @@ build
 *.lst
 .DS_Store
 .project
-
-.fake
+Discovery_Board_Manuals/
+Homework/
+exam_prep/
+figures/
+lab_instructions/

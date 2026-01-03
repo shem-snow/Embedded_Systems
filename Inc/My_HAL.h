@@ -24,14 +24,14 @@
 #define GPIO_Pull_up 0x1
 #define GPIO_Pull_down 0x2
 
-
 #define RED  1<<6
 #define BLUE 1<<7
 #define ORANGE 1<<8
 #define GREEN 1<<9
 
 /** 
-  * @brief  This struct contains the registers you would use for GPIO pins.
+  * @brief  This struct contains the registers you would use to configure any GPIO pin.
+  *         Not all items will be used, but all uses will use these items.
   */
 typedef struct {
   uint32_t PinNumber;
@@ -58,24 +58,33 @@ typedef struct {
 
 } My_GPIO_InitTypeDef;
 
+
+/*
+________________________________________ Function prototypes: ________________________________________
+*/
+
+ // ________________________________________ GPIOs and other misc _________________________________________
 void HAL_RCC_CLK_Enable(char GPIOx, uint32_t number);
 void Reset_Interrupt(char pin);
+
 void HAL_ALTERNATE_PIN_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init);
 void My_HAL_GPIO_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init);
 
-
+void Init_LEDs(void);
 
 // ________________________________________ UART _________________________________________
 void Transmit_Char(char c);
 void Transmit_String(char* str);
 void Process_TDR_Part_I(char c);
 void Process_TDR_Part_II(char LED, char action_ID);
-
 void Init_USART3(void);
-void Init_LEDs(void);
+
+// ________________________________________ I2C _________________________________________
 void Init_I2C2(void);
 void Init_Gyroscope(void);
 int8_t Read_Gyroscope_Output(char c);
+
+// ________________________________________ ADC _________________________________________
 void Init_ADC(GPIO_TypeDef* GPIOx, uint16_t pin_number);
 void Calibrate_and_start_ADC(void);
 void Init_DAC(GPIO_TypeDef* GPIOx, uint16_t pin_number);

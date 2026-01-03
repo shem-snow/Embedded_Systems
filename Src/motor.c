@@ -11,6 +11,7 @@
  */
 #include "motor.h"
 #include "My_HAL.h"
+#include "SEGGER_RTT.h"
 
 volatile int16_t error_integral = 0;    // Integrated error signal
 volatile uint8_t duty_cycle = 0;    	// Output PWM duty cycle

@@ -12,7 +12,7 @@
 		contains all the pre-defined values that you might set to the registers in the device header file first mentioned.
 	
 	
-	An additional thing to note: A common function parameter used here is "GPIO_InitTypeDef *" which is a pointer to a struct intended to hole
+	An additional thing to note: A common function parameter used here is "GPIO_InitTypeDef *" which is a pointer to a struct intended to hold
 	items which are just integers that encode each value/setting for peripheral registers. The intention is that you decide all the settings.
 	you want to configure a pin with. Put those settings in said struct. then pass the struct into the function which configures the pin.
 
@@ -146,9 +146,8 @@ void My_HAL_GPIO_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init) {
 */
 void HAL_GPIO_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef *GPIO_Init) {
     // Find the pin number according to the struct's pin.
-	uint16_t pinNumber = Get_GPIO_Pin_Number(GPIO_Init);
+	uint16_t pinNumber = Get_GPIO_Pin_Number(GPIO_Init); // from a one-hot encoded bit shifted into position.
     
-
     // Reset GPIOx location.
     GPIOx->MODER   &= ~(3 << (2 * pinNumber));
     GPIOx->OTYPER  &= ~(1 << (pinNumber));
@@ -165,10 +164,10 @@ void HAL_GPIO_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef *GPIO_Init) {
 }
 
 /*
-	Configures a specified Pin to the specified Alternate Function mode.
+	Configures a specified Pin to the Alternate Function mode specified in the initalized GPIO struct.
 */
 void HAL_ALTERNATE_PIN_Init(GPIO_TypeDef* GPIOx, My_GPIO_InitTypeDef *GPIO_Init) {
-	int index = (GPIO_Init->PinNumber > 7)? 1 : 0;
+	int index = (GPIO_Init->PinNumber > 7)? 1 : 0; // pins 8-15 are the higher ones (1) and pins 0-7 are the lower ones (0).
 
 	GPIOx->AFR[index] &= ~(15 << (4*(GPIO_Init->PinNumber))); // Clear the current bits
 	GPIOx->AFR[index] |= ((GPIO_Init->AlternateFunction) << (4*(GPIO_Init->PinNumber))); // Set the new bits
@@ -188,8 +187,8 @@ int Get_GPIO_Pin_Number(GPIO_InitTypeDef *GPIO_Init){
 	Set bits to zero in the specified pin.
 */
 void HAL_GPIO_DeInit(GPIO_TypeDef* GPIOx, uint32_t GPIO_Pin) {
-    // Find the pin number according to the struct's pin.
-
+    
+	// Find the pin number according to the struct's pin.
 	uint16_t pinNumber;
 	for(pinNumber = 0; pinNumber < 16; pinNumber++) {
         if (GPIO_Pin == (1U << pinNumber)) {

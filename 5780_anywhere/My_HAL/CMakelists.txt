@@ -1,0 +1,15 @@
+add_library(My_HAL STATIC
+    Src/My_HAL.c
+    Src/System_Setup.c
+)
+
+target_include_directories(My_HAL
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/Inc
+)
+
+# If My_HAL depends on STM32 HAL headers, add them here:
+target_link_libraries(My_HAL
+    PUBLIC
+        STM32_HAL
+)

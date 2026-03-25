@@ -49,4 +49,7 @@ void encoder_init(void);
 // Sets up ADC to measure motor current
 void ADC_init(void);
 
+// For logging data
+void log_init(void);
+
 #endif /* MOTOR_H_ */

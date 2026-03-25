@@ -15,8 +15,8 @@ volatile uint8_t Kp = 1;            	// Proportional gain
 volatile uint8_t Ki = 1;            	// Integral gain
 
 static uint8_t buf0[1024];
-// static uint8_t buf1[1024];
-// static uint8_t buf2[1024]; // TODO: I'm pretty sure it's fine if the motor_init() function just uses one buffer.
+static uint8_t buf1[1024];
+static uint8_t buf2[1024];
 
 /*
     Uses to clamp error correction results within min and max bounds in order to 
@@ -37,9 +37,7 @@ void motor_init(void) {
     encoder_init();
     ADC_init();
 
-    SEGGER_RTT_ConfigUpBuffer(0,"",buf0, 1024, SEGGER_RTT_MODE_NO_BLOCK_SKIP);
-    SEGGER_RTT_ConfigUpBuffer(1,"",buf0, 1024, SEGGER_RTT_MODE_NO_BLOCK_SKIP);
-    SEGGER_RTT_ConfigUpBuffer(2,"",buf0, 1024, SEGGER_RTT_MODE_NO_BLOCK_SKIP);
+    log_init();
 }
 
 // Sets up the PWM and direction signals to drive the H-Bridge
@@ -130,10 +128,16 @@ union byte_split {
     uint8_t bytes[4];
 };
 
+void log_init(void) {
+    SEGGER_RTT_ConfigUpBuffer(0, "", buf0, 1024, SEGGER_RTT_MODE_NO_BLOCK_SKIP);
+    SEGGER_RTT_ConfigUpBuffer(1, "", buf1, 1024, SEGGER_RTT_MODE_NO_BLOCK_SKIP);
+    SEGGER_RTT_ConfigUpBuffer(2, "", buf2, 1024, SEGGER_RTT_MODE_NO_BLOCK_SKIP);
+}
+
 void log_data(void) {
     // Begin critical section
     __disable_irq();
-    uint32_t duty_cycle_copy = duty_cycle;    
+    uint32_t duty_cycle_copy = duty_cycle;
     int32_t target_rpm_copy = target_rpm;
     int32_t motor_speed_copy = motor_speed;
     // End critical section

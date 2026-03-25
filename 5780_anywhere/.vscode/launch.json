@@ -23,22 +23,34 @@
             "showDevDebugOutput": "none"
         },
 
-        { // Lab 7
+        {
+            "type": "stlinkgdbtarget",
+            "request": "launch",
+            "name": "STM32Cube: STM32 Launch ST-Link GDB Server",
+            "origin": "snippet",
+            "cwd": "${workspaceFolder}",
+            "preBuild": "${command:st-stm32-ide-debug-launch.build}",
+            "runEntry": "main",
+            "imagesAndSymbols": [
+                {
+                    "imageFileName": "${command:cmake.launchTargetPath}"
+                }
+            ]
+        },
+        {
             "cwd": "${workspaceRoot}",
-            "executable": "${workspaceRoot}/.pio/build/lab1/firmware.elf",
-            "name": "Debug Lab7 (with OpenOCD)",
+            "executable": "${command:cmake.launchTargetPath}",
+            "name": "RTT graphing",
             "request": "launch",
             "type": "cortex-debug",
+            "openOCDLaunchCommands": [],
             "servertype": "openocd",
             "configFiles": [
                 "board/stm32f0discovery.cfg"
             ],
-            "searchDir": [
-                "${userHome}/.platformio/packages/tool-openocd/openocd"
-            ],
             "runToEntryPoint": "main",
-            "showDevDebugOutput": "none",
-            "svdPath": "${userHome}/.platformio/platforms/ststm32/misc/svd/STM32F446x.svd",
+            "showDevDebugOutput": "raw",
+            "svdPath": "${workspaceRoot}/STM32F0x2.svd",
             "rttConfig": {
                 "enabled": true,
                 "address": "auto",
@@ -47,7 +59,7 @@
                         "label": "duty_cycle",
                         "port": 0,
                         "type": "graph",
-                        "encoding":"unsigned",
+                        "encoding": "unsigned",
                         "graphId": "1",
                         "scale": 1
                     },
@@ -55,7 +67,7 @@
                         "label": "target_rpm",
                         "port": 1,
                         "type": "graph",
-                        "encoding":"signed",
+                        "encoding": "signed",
                         "graphId": "2",
                         "scale": 1
                     },
@@ -63,23 +75,19 @@
                         "label": "motor_speed",
                         "port": 2,
                         "type": "graph",
-                        "encoding":"signed",
+                        "encoding": "signed",
                         "graphId": "3",
                         "scale": 1
                     }
                 ]
             },
-            "preLaunchTask": {
-                "type": "PlatformIO",
-                "task": "Pre-Debug (lab1)"
-            },
             "graphConfig": [
                 {
                     "label": "Graph 1",
-                    "timespan": 5,
+                    "timespan": 1,
                     "type": "realtime",
                     "annotate": false,
-                    "maximum": 256,
+                    "maximum": 120,
                     "minimum": 0,
                     "plots": [
                         {
@@ -98,7 +106,7 @@
                             "color": "#B57EDC"
                         }
                     ]
-                },
+                }
             ]
         }
     ]

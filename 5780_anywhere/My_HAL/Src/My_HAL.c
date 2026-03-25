@@ -252,6 +252,7 @@ void Reset_Interrupt(char peripheral) {
 			// TODO:
 			break;
 		default:
+			;
 	}
 }
 
@@ -290,10 +291,10 @@ void Init_LEDs(void) {
 	GPIOC->PUPDR &= ~(3<<2*9);
 	
 	// Initialize each light to be off
-	GPIOC->ODR &= ~RED;
-	GPIOC->ODR &= ~BLUE;
-	GPIOC->ODR &= ~ORANGE;
-	GPIOC->ODR &= ~GREEN;
+	GPIOC->ODR &= ~(RED);
+	GPIOC->ODR &= ~(BLUE);
+	GPIOC->ODR &= ~(ORANGE);
+	GPIOC->ODR &= ~(GREEN);
 }
 
 void Init_Button(void) {
@@ -566,11 +567,11 @@ int8_t gyro_transaction(char direction, uint8_t slave_address, int8_t payload_ad
 
             // Enter an error loop on failure
             int8_t read_value;
-            if( (I2C2->ISR) & (I2C_ISR_RXNE) )
+			if ((I2C2->ISR) & (I2C_ISR_RXNE))
 				read_value = I2C2->RXDR;
 			else
-                Error_loop(GREEN, 1000);
-                
+				Error_loop(GREEN, 1000);
+
             // Wait for the transmission to complete.
             while(!( (I2C2->ISR) & ( (I2C_ISR_TC) | (I2C_ISR_NACKF)) )) {} // Transfer Complete is the 6th bit.
 

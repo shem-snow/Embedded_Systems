@@ -1,5 +1,5 @@
 Terminal commands for building and flashing:
-    if running for the first time:
+    if running for the first time or if you removed the build directory:
         cmake -B build -S ./   
     cmake --build build --target clean
     cmake --build build --target all

@@ -1,6 +1,21 @@
 {
     "version": "0.2.0",
     "configurations": [
+        { // Lab 3
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceFolder}/build/lab3/lab3.elf",
+            "name": "Debug Lab3 (with OpenOCD)",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "configFiles": [
+                "/opt/homebrew/share/openocd/scripts/interface/stlink.cfg",
+                "/opt/homebrew/share/openocd/scripts/target/stm32f0x.cfg"
+            ],
+            // "runToEntryPoint": "main",
+            "showDevDebugOutput": "raw",
+            "svdPath": "${workspaceRoot}/STM32F0x2.svd"
+        },
         { // Lab 5
             "cwd": "${workspaceRoot}",
             "executable": "${workspaceFolder}/build/lab5/lab5.elf",

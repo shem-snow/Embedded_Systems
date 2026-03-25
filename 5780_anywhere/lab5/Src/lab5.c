@@ -1,4 +1,3 @@
-#include "main.h"
 #include "stm32f0xx_hal.h"
 #include "My_HAL.h"
 #include "System_Setup.h"
@@ -50,7 +49,7 @@ void Checkoff_5_1(void) {
 
     int mismatch = 0;
     // if(gyro_transaction(0xF, 1, 'r', -1) != 0xD3) // 0xF is the address of the "WHO_AM_I" register which should always hold the value 0xD3.
-    if(I2C_Read(0x69, 0xF) != 0xD3)
+    if(I2C_Read(0x69, 0xF) != (int8_t) 0xD3)
         mismatch += 1;
     if(gyro_transaction(0x30, 1, 'r', -1) != 0) // 0xF is the address of the "WHO_AM_I" register which should always hold the value 0xD3.
         mismatch += 1;
@@ -128,7 +127,7 @@ void Read_Gyroscope(int num_bytes, uint8_t slave_address, int8_t payload_address
   
     if( (I2C2->ISR) & (I2C_ISR_NACKF))
 		Error_loop(RED, 1000);
-	else
+    else
 		I2C2->TXDR = payload_address | (1 << 7); // 1<<7 is the auto-increment bit
  
     while (!(I2C2->ISR & I2C_ISR_TC)) {}
@@ -144,7 +143,7 @@ void Read_Gyroscope(int num_bytes, uint8_t slave_address, int8_t payload_address
 
         if( (I2C2->ISR) & (I2C_ISR_NACKF) )
 		    Error_loop(RED, 1000);
-	    else
+        else
             data_array[i] = I2C2->RXDR;
     }
 

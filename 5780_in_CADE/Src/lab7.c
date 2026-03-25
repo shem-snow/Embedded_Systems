@@ -141,7 +141,7 @@ int lab7_main(void) {
 
     while (1) {
         encoder_count = TIM2->CNT;
-        HAL_GPIO_TogglePin(GPIOC, GREEN); // Toggle green LED (heartbeat)
+        My_HAL_GPIO_TogglePin(GPIOC, GREEN); // Toggle green LED (heartbeat)
         HAL_Delay(128); // Delay 1/8 second
     }
 

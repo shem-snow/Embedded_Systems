@@ -1,13 +1,13 @@
 build
 *.elf
 *.bin
-.vscode
 *.o
 *.i
 *.d
 *.lst
 .DS_Store
 .project
+.cache
 Discovery_Board_Manuals/
 Homework/
 exam_prep/

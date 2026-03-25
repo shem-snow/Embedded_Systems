@@ -1,0 +1,105 @@
+// AUTOMATICALLY GENERATED FILE. PLEASE DO NOT MODIFY IT MANUALLY
+//
+// PlatformIO Debugging Solution
+//
+// Documentation: https://docs.platformio.org/en/latest/plus/debugging.html
+// Configuration: https://docs.platformio.org/en/latest/projectconf/sections/env/options/debug/index.html
+
+{
+    "version": "0.2.0",
+    "configurations": [
+        { // Lab 5
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceFolder}/build/lab5/lab5.elf",
+            "name": "Debug Lab5 (with OpenOCD)",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "configFiles": [
+            "/opt/homebrew/share/openocd/scripts/interface/stlink.cfg",
+            "/opt/homebrew/share/openocd/scripts/target/stm32f0x.cfg"
+            ],
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "none"
+        },
+
+        { // Lab 7
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceRoot}/.pio/build/lab1/firmware.elf",
+            "name": "Debug Lab7 (with OpenOCD)",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "configFiles": [
+                "board/stm32f0discovery.cfg"
+            ],
+            "searchDir": [
+                "${userHome}/.platformio/packages/tool-openocd/openocd"
+            ],
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "none",
+            "svdPath": "${userHome}/.platformio/platforms/ststm32/misc/svd/STM32F446x.svd",
+            "rttConfig": {
+                "enabled": true,
+                "address": "auto",
+                "decoders": [
+                    {
+                        "label": "duty_cycle",
+                        "port": 0,
+                        "type": "graph",
+                        "encoding":"unsigned",
+                        "graphId": "1",
+                        "scale": 1
+                    },
+                    {
+                        "label": "target_rpm",
+                        "port": 1,
+                        "type": "graph",
+                        "encoding":"signed",
+                        "graphId": "2",
+                        "scale": 1
+                    },
+                    {
+                        "label": "motor_speed",
+                        "port": 2,
+                        "type": "graph",
+                        "encoding":"signed",
+                        "graphId": "3",
+                        "scale": 1
+                    }
+                ]
+            },
+            "preLaunchTask": {
+                "type": "PlatformIO",
+                "task": "Pre-Debug (lab1)"
+            },
+            "graphConfig": [
+                {
+                    "label": "Graph 1",
+                    "timespan": 5,
+                    "type": "realtime",
+                    "annotate": false,
+                    "maximum": 256,
+                    "minimum": 0,
+                    "plots": [
+                        {
+                            "graphId": "1",
+                            "label": "duty_cycle",
+                            "color": "#53753c"
+                        },
+                        {
+                            "graphId": "2",
+                            "label": "target_rpm",
+                            "color": "#955f20"
+                        },
+                        {
+                            "graphId": "3",
+                            "label": "motor_speed",
+                            "color": "#B57EDC"
+                        }
+                    ]
+                },
+            ]
+        }
+    ]
+}

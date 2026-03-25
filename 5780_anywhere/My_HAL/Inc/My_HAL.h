@@ -102,3 +102,6 @@ int8_t I2C_Read(uint32_t slave_address, uint32_t payload_address);
 void Init_ADC(GPIO_TypeDef* GPIOx, uint16_t pin_number);
 void Calibrate_and_start_ADC(void);
 void Init_DAC(GPIO_TypeDef* GPIOx, uint16_t pin_number);
+
+// ________________________________________ PID _________________________________________
+void Lab7_Systick_Callback(void);

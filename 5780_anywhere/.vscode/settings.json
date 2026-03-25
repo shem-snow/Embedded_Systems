@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "/Users/shem/.vcpkg/artifacts/2139c4c6/debuggers.arm.armdbg/6.4.0/sw/osgi/dbgcore.app/Contents/Eclipse/plugins/com.arm.debug.interpreter.jython.api_0.0.0.202412182131"
+    ]
+}

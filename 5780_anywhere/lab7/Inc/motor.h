@@ -51,5 +51,6 @@ void ADC_init(void);
 
 // For logging data
 void log_init(void);
+void log_data(void);
 
 #endif /* MOTOR_H_ */

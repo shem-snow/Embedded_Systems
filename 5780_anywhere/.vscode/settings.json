@@ -1,5 +1,22 @@
+// {
+//     "python.analysis.extraPaths": [
+//         "/Users/shem/.vcpkg/artifacts/2139c4c6/debuggers.arm.armdbg/6.4.0/sw/osgi/dbgcore.app/Contents/Eclipse/plugins/com.arm.debug.interpreter.jython.api_0.0.0.202412182131"
+//     ]
+// },
 {
-    "python.analysis.extraPaths": [
-        "/Users/shem/.vcpkg/artifacts/2139c4c6/debuggers.arm.armdbg/6.4.0/sw/osgi/dbgcore.app/Contents/Eclipse/plugins/com.arm.debug.interpreter.jython.api_0.0.0.202412182131"
-    ]
+    "cmake.cmakePath": "cube-cmake",
+    "cmake.configureArgs": [
+        "-DCMAKE_COMMAND=cube-cmake"
+    ],
+    "cmake.preferredGenerators": [
+        "Ninja"
+    ],
+    "files.associations": {
+        "*.html": "twig",
+        "stm32f0xx_hal_gpio.h": "c",
+        "stm32f0xx_hal_def.h": "c",
+        "stm32f072xb.h": "c",
+        "stddef.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "enabled"
 }

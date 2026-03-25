@@ -93,7 +93,7 @@ int main(void) {
 
     while (1) {
         HAL_GPIO_TogglePin(GPIOC, GREEN); // Toggle green LED (heartbeat)
-        encoder_count = TIM2->CNT;
+        encoder_count = TIM3->CNT;
         HAL_Delay(128); // Delay 1/8 second
     }
 }

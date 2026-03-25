@@ -7,6 +7,8 @@ Terminal commands for building and flashing:
 
     cmake --build build --target all && make -C build flash_lab
 
+    cmake --build build --target clean & cmake --build build --target all && make -C build flash_lab7
+
 
 This is a project template for ECE 5780, Embedded Systems.
 

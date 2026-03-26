@@ -11,8 +11,10 @@ volatile int16_t target_rpm = 0;    	// Desired speed target
 volatile int16_t motor_speed = 0;   	// Measured motor speed
 volatile int8_t adc_value = 0;      	// ADC measured motor current
 volatile int16_t error = 0;         	// Speed error signal
-volatile uint8_t Kp = 1;            	// Proportional gain
-volatile uint8_t Ki = 1;            	// Integral gain
+
+// Kp is Proportional gain. Ki is Integral gain. Setting both to 1 works. The goal of this lab is to set them to ideal values.
+volatile uint8_t Kp = 8; // 8-10
+volatile uint8_t Ki = 3; // 3
 
 static uint8_t buf0[1024];
 static uint8_t buf1[1024];
@@ -214,9 +216,24 @@ void PI_update(void) {
      *       more resolution.
      */
 
-    // desired - measured  in ticks per time.
-    // error = 2*target_rpm - motor_speed;
-    error = target_rpm * 3200 / 60 * 0.045 - motor_speed; // = 2.4*target_rpm - motor_speed
+    /*
+       
+        error = desired - measured
+        error = target_rpm - motor_speed;
+
+        motor speed is in ticks per period.
+        target_rpm is in rpm
+
+        rev/min * min/60s * ??s/period * 3200 ticks/rev = ??? ticks/period
+
+        To get the period, ese the equation from lab 3.
+
+        If you assume clock frequency of 8 MHz, you get 0.045 -> 2.4
+        If you trust the code and use 24 MHz, you get 0.015 -> 0.8
+
+    */
+    // error = (target_rpm * 3200 * 0.015) / 60 - motor_speed; // = 0.8*target_rpm - motor_speed
+    error = ( (target_rpm * 3200 * 0.045)/ 60 ) - motor_speed; // = 2.4*target_rpm - motor_speed
     
     
     /// Calculate integral portion of PI controller, write to "error_integral" variable.
@@ -230,9 +247,8 @@ void PI_update(void) {
     // error_integral = clamp( (error_integral + (error*duty_cycle)) , 0, 3200);
     error_integral = clamp(error_integral + Ki*error, 0, 3200);
 
-
     /// Calculate proportional portion, add integral and write to "output" variable
-    int16_t output = (Kp*error) + Ki * error_integral;
+    int16_t output = (Kp*error) + error_integral;
 
     
     /* Because the calculated values for the PI controller are significantly larger than 

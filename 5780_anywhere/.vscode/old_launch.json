@@ -1,9 +1,48 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        { // Lab 3
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceFolder}/build/lab3/lab3.elf",
+            "name": "Debug Lab3 (with OpenOCD)",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "configFiles": [
+                "/opt/homebrew/share/openocd/scripts/interface/stlink.cfg",
+                "/opt/homebrew/share/openocd/scripts/target/stm32f0x.cfg"
+            ],
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "none",
+        },
+        { // Lab 5
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceFolder}/build/lab5/lab5.elf",
+            "name": "Debug Lab5 (with OpenOCD)",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "configFiles": [
+                "/opt/homebrew/share/openocd/scripts/interface/stlink.cfg",
+                "/opt/homebrew/share/openocd/scripts/target/stm32f0x.cfg"
+            ],
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "none"
+        },
+        {
+            "name": "Lab 7 bare debug",
+            "cwd": "${workspaceFolder}",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "executable": "${workspaceFolder}/build/Debug/lab7/lab7.elf",
+            "configFiles": [
+                "/opt/homebrew/share/openocd/scripts/interface/stlink.cfg",
+                "/opt/homebrew/share/openocd/scripts/target/stm32f0x.cfg"
+            ],
+            "showDevDebugOutput": "raw",
+            "svdPath": "${workspaceFolder}/STM32F0x2.svd"
+        },
         {
             "type": "stlinkgdbtarget",
             "request": "launch",
@@ -19,51 +58,9 @@
             ]
         },
         {
-            "cwd": "${workspaceFolder}",
-            "executable": "${workspaceFolder}/build/lab4/lab4.elf",
-            "name": "Lab4Debug",
-            "request": "launch",
-            "type": "cortex-debug",
-            "servertype": "openocd",
-            "configFiles": [
-               "/usr/local/share/openocd/scripts/interface/stlink.cfg",
-               "/usr/local/share/openocd/scripts/target/stm32f0x.cfg"
-            ],
-            "runToEntryPoint": "main",
-            "showDevDebugOutput": "none"
-        },
-        {
-            "cwd": "${workspaceFolder}",
-            "executable": "${workspaceFolder}/build/lab5/lab5.elf",
-            "name": "Lab5Debug",
-            "request": "launch",
-            "type": "cortex-debug",
-            "servertype": "openocd",
-            "configFiles": [
-               "/usr/local/share/openocd/scripts/interface/stlink.cfg",
-               "/usr/local/share/openocd/scripts/target/stm32f0x.cfg"
-            ],
-            "runToEntryPoint": "main",
-            "showDevDebugOutput": "none"
-        },
-        {
-            "cwd": "${workspaceFolder}",
-            "executable": "${workspaceFolder}/build/lab6/lab6.elf",
-            "name": "Lab6Debug",
-            "request": "launch",
-            "type": "cortex-debug",
-            "servertype": "openocd",
-            "configFiles": [
-               "/usr/local/share/openocd/scripts/interface/stlink.cfg",
-               "/usr/local/share/openocd/scripts/target/stm32f0x.cfg"
-            ],
-            "runToEntryPoint": "main",
-            "showDevDebugOutput": "none"
-        },
-        {
             "cwd": "${workspaceRoot}",
-            "executable": "${workspaceFolder}/build/lab7/lab7.elf",
-            "name": "RTT graphing",
+            "executable": "${workspaceFolder}/build/Debug/lab7/lab7.elf", //"${command:cmake.launchTargetPath}",
+            "name": "Lab 7 (RTT graphing)",
             "request": "launch",
             "type": "cortex-debug",
             "openOCDLaunchCommands": [],

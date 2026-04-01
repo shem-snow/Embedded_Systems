@@ -221,19 +221,16 @@ void PI_update(void) {
         error = desired - measured
         error = target_rpm - motor_speed;
 
-        motor speed is in ticks per period.
+        motor speed is in ticks per period (of timer 6).
         target_rpm is in rpm
 
-        rev/min * min/60s * ??s/period * 3200 ticks/rev = ??? ticks/period
+        rev/min * min/60s * ??s/period * 3200 pulses/rev = ??? pulses/period
 
         To get the period, ese the equation from lab 3.
 
-        If you assume clock frequency of 8 MHz, you get 0.045 -> 2.4
-        If you trust the code and use 24 MHz, you get 0.015 -> 0.8
-
     */
-    // error = (target_rpm * 3200 * 0.015) / 60 - motor_speed; // = 0.8*target_rpm - motor_speed
-    error = ( (target_rpm * 3200 * 0.045)/ 60 ) - motor_speed; // = 2.4*target_rpm - motor_speed
+    double tim6_period = 0.0375;
+    error = ( (target_rpm * 3200 * tim6_period)/ 60 ) - motor_speed;
     
     
     /// Calculate integral portion of PI controller, write to "error_integral" variable.
